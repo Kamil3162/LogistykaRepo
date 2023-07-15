@@ -26,8 +26,10 @@ SECRET_KEY = 'django-insecure-u1j9$e5y6y6)wpz4l-2o@&h22*4vs6fy)-xr0_rd81=)x)%gij
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '127.0.0.1:3000',
-    'localhost:3000'
+    '127.0.0.1',
+    'localhost',
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
 ]
 
 
@@ -73,6 +75,13 @@ TEMPLATES = [
         },
     },
 ]
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
 
 WSGI_APPLICATION = 'Logistyka.wsgi.application'
 
@@ -109,6 +118,14 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
+]
+# PASSWORD_HASHERS[0] = 'django.contrib.auth.hashers.PBKDF2SHA256PasswordHasher'
 
 
 # Internationalization
@@ -123,6 +140,15 @@ USE_I18N = True
 USE_TZ = True
 
 AUTH_USER_MODEL = "UserManage.CustomUser"
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+}
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 

@@ -1,4 +1,7 @@
 from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import BasePasswordHasher, get_hasher, identify_hasher, PBKDF2PasswordHasher
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, first_name, last_name,
@@ -28,8 +31,16 @@ class CustomUserManager(BaseUserManager):
             street=street,
             **extra_fields
         )
+        hasher = PBKDF2PasswordHasher()
+        password_text = password
+        print(password_text)
+        hashed_password = hasher.encode(password_text, hasher.salt())
+        print(hashed_password)
 
         user.set_password(password)
+        print(get_hasher())
+        print(user.password)
+        print(identify_hasher(user.password))
         user.save(using=self._db)
         return user
 
