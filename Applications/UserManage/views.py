@@ -8,7 +8,7 @@ from .serializers import (
     UserRegisterSerializer, UserLoginSerializer, UserSerializer)
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from django.contrib.auth import logout, authenticate
+from django.contrib.auth import logout, authenticate, login
 from .models import CustomUser
 
 class Login(APIView):
@@ -20,6 +20,7 @@ class Login(APIView):
         serializer = UserLoginSerializer(data=clean_data)
         if serializer.is_valid():
             user = serializer.check_user(clean_data)
+            login(request, user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(status=status.HTTP_404_NOT_FOUND)
 

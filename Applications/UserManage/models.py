@@ -25,7 +25,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return f"Custom user model {self.first_name} " \
-               f"{self.last_name} Phone Number {self.phone_number}"
-
+        # return f"Custom user model {self.first_name} " \
+        #        f"{self.last_name} Phone Number {self.phone_number}"
+        return f'{self.first_name} {self.last_name}'
 
