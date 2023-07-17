@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import logout, authenticate, login
 from .models import CustomUser
+from django.http import JsonResponse
 
 class Login(APIView):
     permission_classes = [permissions.AllowAny, ]
@@ -61,3 +62,35 @@ class Logout(APIView):
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_200_OK)
+
+'''
+    Part responsible for handle view using jwt token 
+'''
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class LoginTokenView(APIView):
+    permission_classes = (permissions.AllowAny, )
+
+    def post(self, request):
+        data = request.data
+        serializer = UserLoginSerializer(data=data)
+        if serializer.is_valid():
+
+            user = serializer.check_user(data)
+            refresh = RefreshToken.for_user(user)
+
+            return Response(data={
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            })
+
+class HomeTokenView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return JsonResponse(data={
+            'information': "properly log in"
+        })
+
+# "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg5NjI4MzA1LCJpYXQiOjE2ODk2Mjc3MDUsImp0aSI6IjU1OTZkZTNjNzIxODRmMDhiZmE2M2MzYzViZjYzMTNmIiwidXNlcl9pZCI6OH0.weqbPYOpZnUo7yBkkTt-t4FKOOdDmsAMuoM6t9-un-I"

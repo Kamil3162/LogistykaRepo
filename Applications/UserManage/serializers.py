@@ -9,13 +9,14 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=30)
 
     def check_user(self, clean_data):
-        user = authenticate(
-            username=clean_data['email'],
-            password=clean_data['password']
-        )
-        if not user:
+        try:
+            user = authenticate(
+                username=clean_data['email'],
+                password=clean_data['password']
+            )
+            return user
+        except ValidationError:
             raise ValidationError("Improper password or login")
-        return user
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
