@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.generics import (
@@ -11,7 +13,7 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import logout, authenticate, login
 from .models import CustomUser
 from django.http import JsonResponse
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 class Login(APIView):
     permission_classes = [permissions.AllowAny, ]
     authentication_classes = (authentication.SessionAuthentication, )
@@ -93,4 +95,31 @@ class HomeTokenView(APIView):
             'information': "properly log in"
         })
 
-# "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjg5NjI4MzA1LCJpYXQiOjE2ODk2Mjc3MDUsImp0aSI6IjU1OTZkZTNjNzIxODRmMDhiZmE2M2MzYzViZjYzMTNmIiwidXNlcl9pZCI6OH0.weqbPYOpZnUo7yBkkTt-t4FKOOdDmsAMuoM6t9-un-I"
+class LogoutTokenView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication, )
+
+    def post(self, request):
+        try:
+            refresh_token = request.data['refresh_token']
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ValidateToken(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication,)
+
+    def get(self, request):
+        return Response(data={'valid': True}, status=status.HTTP_200_OK)
+
+class UserDetailToken(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication,)
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

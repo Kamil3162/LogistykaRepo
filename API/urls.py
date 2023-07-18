@@ -10,5 +10,8 @@ urlpatterns = [
     path('token/', jwt_views.TokenObtainPairView.as_view(), name='token'),
     path('token/refresh', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('login/token', views.LoginTokenView.as_view(), name='token_refresh'),
-    path('home/token', views.HomeTokenView.as_view(), name='home_token')
+    path('home/token', views.HomeTokenView.as_view(), name='home_token'),
+    path('detail-user/', views.UserDetailToken.as_view(), name='details-user'),
+    path('validate-token/', views.ValidateToken.as_view(), name='validate-token'),
+    path('logout-token/', views.LogoutTokenView.as_view(), name='validate-token')
 ]
