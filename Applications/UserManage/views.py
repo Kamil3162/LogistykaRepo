@@ -101,6 +101,7 @@ class LogoutTokenView(APIView):
 
     def post(self, request):
         try:
+            print(request)
             refresh_token = request.data['refresh_token']
             token = RefreshToken(refresh_token)
             token.blacklist()
