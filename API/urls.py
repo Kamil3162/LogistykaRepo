@@ -14,5 +14,9 @@ urlpatterns = [
     # path('', views.LoginTokenView.as_view(), name='token_refresh'),
     path('home/token', views.HomeTokenView.as_view(), name='home_token'),
     path('detail-user/', views.UserDetailToken.as_view(), name='details-user'),
-    path('logout-token/', views.LogoutTokenView.as_view(), name='logout-token')
+    path('logout-token/', views.LogoutTokenView.as_view(), name='logout-token'),
+    ####################
+    path('all-users/', views.UserAllView.as_view(), name='all-users'),
+    path('register/token', views.RegisterUserView.as_view(), name='register-users'),
+    path('user/<int:pk>', views.UserDetailView.as_view(), name='user-detail')
 ]

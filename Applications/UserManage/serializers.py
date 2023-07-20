@@ -4,6 +4,7 @@ from rest_framework.authentication import authenticate
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 
+
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=60)
     password = serializers.CharField(max_length=30)

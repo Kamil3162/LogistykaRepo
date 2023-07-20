@@ -29,3 +29,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         #        f"{self.last_name} Phone Number {self.phone_number}"
         return f'{self.first_name} {self.last_name}'
 
+    def to_json(self):
+        json_data = {}
+        fields = self._meta.fields
+        for field in fields:
+            json_data[field] = getattr(self, field)
+        return json_data
