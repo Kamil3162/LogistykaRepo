@@ -2,18 +2,54 @@ from django.db import models
 from django.contrib.auth.models import (
     AbstractUser, AbstractBaseUser, PermissionsMixin, BaseUserManager)
 from .user_manager import CustomUserManager
-
+from .validators import (
+    apartment_house_num_validator,
+    street_name_validator,
+    zip_code_validator
+)
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    first_name = models.CharField(max_length=40)
-    last_name = models.CharField(max_length=50)
+    AVAILABLE_CHOICES = (
+        ('Dostepny', 'Dostepny'),
+        ('Zajety', 'Zajety'),
+        ('Urlop', 'Urlop'),
+        ('Inne', 'Inne')
+    )
+    first_name = models.CharField(
+        max_length=40,
+        validators=[street_name_validator]
+    )
+    last_name = models.CharField(
+        max_length=50,
+        validators=[street_name_validator]
+    )
     email = models.EmailField(max_length=60, unique=True)
     password = models.CharField(max_length=200)
-    house_number = models.CharField(max_length=5)
-    apartment_number = models.CharField(max_length=5)
-    city = models.CharField(max_length=30)
-    street = models.CharField(max_length=30)
+    house_number = models.CharField(
+        max_length=5,
+        validators=[apartment_house_num_validator]
+    )
+    apartment_number = models.CharField(
+        max_length=5,
+        validators=[apartment_house_num_validator]
+    )
+    city = models.CharField(
+        max_length=30,
+        validators=[street_name_validator]
+    )
+    street = models.CharField(
+        max_length=30,
+        validators=[street_name_validator]
+    )
     phone_number = models.IntegerField(max_length=9, unique=True)
-    zip_code = models.CharField(max_length=6)
+    zip_code = models.CharField(
+        max_length=6,
+        validators=[street_name_validator]
+    )
+    avaiable = models.CharField(
+        max_length=8,
+        choices=AVAILABLE_CHOICES,
+        default='Dostepny'
+    )
     objects = CustomUserManager()
 
     is_active = models.BooleanField(default=True)
@@ -39,3 +75,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def show_permissions(self):
         return f"Admin:{self.is_admin} Superuser:{self.is_superuser} "\
                f"Staff:{self.is_staff}"
+
+    def all_fields(self):
+        return self.clean_fields()

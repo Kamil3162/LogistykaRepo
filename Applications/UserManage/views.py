@@ -132,7 +132,7 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user_pk = self.kwargs.get(self.lookup_url_kwarg)
-        return CustomUser.objects.filter(id=user_pk)
+        return CustomUser.objects.get(id=user_pk)
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -146,20 +146,22 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
             return Response(data={'error': str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def put(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             data = request.data
             current_user = request.user
             modified_user = self.get_queryset()
-            serializer = UserDetailSerializer(data=data, partial=True)
+            serializer = self.get_serializer(instance=modified_user, data=data, partial=True)
             if serializer.is_valid():
                 mod_user = serializer.update(modified_user, data)
                 mod_user.save()
+                # data={'success': 'naura'}
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
         except Exception as e:
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class RegisterUserView(CreateAPIView):
     permission_classes = (permissions.AllowAny, )

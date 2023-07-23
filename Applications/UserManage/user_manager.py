@@ -31,23 +31,15 @@ class CustomUserManager(BaseUserManager):
             street=street,
             **extra_fields
         )
-        hasher = PBKDF2PasswordHasher()
-        password_text = password
-        print(password_text)
-        hashed_password = hasher.encode(password_text, hasher.salt())
-        print(hashed_password)
 
         user.set_password(password)
-        print(get_hasher())
-        print(user.password)
-        print(identify_hasher(user.password))
         user.save(using=self._db)
         return user
 
     def create_director(self, first_name, last_name,
-                    email, city, phone_number,
-                    zip_code, password=None, house_number=None,
-                    apartment_number=None, street=None, **extra_fields):
+                        email, city, phone_number,
+                        zip_code, password=None, house_number=None,
+                        apartment_number=None, street=None, **extra_fields):
         user = self.create_user(
             first_name=first_name,
             last_name=last_name,
@@ -84,4 +76,5 @@ class CustomUserManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_admin = True
+
         return user
