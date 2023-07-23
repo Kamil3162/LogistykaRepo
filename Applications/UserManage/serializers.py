@@ -51,3 +51,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = '__all__'
 
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        exclude = ('password', 'is_active', 'is_superuser',
+                   'is_admin', 'is_staff', 'groups', 'user_permissions')
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        return instance
+

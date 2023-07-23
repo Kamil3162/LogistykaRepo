@@ -1,75 +1,34 @@
 import json
-
 from django.shortcuts import render
 from rest_framework.views import APIView
+
 from rest_framework.generics import (
-    ListAPIView, CreateAPIView, DestroyAPIView, RetrieveAPIView
+    ListAPIView,
+    CreateAPIView,
+    DestroyAPIView,
+    RetrieveAPIView,
+    RetrieveUpdateDestroyAPIView,
+    RetrieveUpdateAPIView
 )
-from rest_framework import permissions, status, authentication
+
+from rest_framework import (
+    permissions,
+    status,
+    authentication
+)
+
 from .serializers import (
-    UserRegisterSerializer, UserLoginSerializer, UserSerializer)
+    UserRegisterSerializer,
+    UserLoginSerializer,
+    UserSerializer,
+    UserDetailSerializer
+)
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import logout, authenticate, login
 from .models import CustomUser
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
-class Login(APIView):
-    permission_classes = [permissions.AllowAny, ]
-    authentication_classes = (authentication.SessionAuthentication, )
-
-    def post(self, request):
-        clean_data = request.data
-        serializer = UserLoginSerializer(data=clean_data)
-        if serializer.is_valid():
-            user = serializer.check_user(clean_data)
-            login(request, user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-class Register(APIView):
-    permission_classes = [permissions.AllowAny, ]
-
-    def post(self, request):
-        print(request.data)
-        clean_data = request.data
-        serializer = UserRegisterSerializer(data=clean_data)
-        if serializer.is_valid():
-            try:
-                user = serializer.check_data(clean_data)
-                return Response(data=serializer.data, status=status.HTTP_201_CREATED)
-            except ValidationError as e:
-                return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={'error':str(serializer.errors)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class AllUsers(ListAPIView):
-    serializer_class = UserSerializer
-    permission_classes = (permissions.AllowAny, )
-
-    def get_queryset(self):
-        return CustomUser.objects.all()
-
-    def get_serializer_context(self):
-        context = super(AllUsers, self).get_serializer_context()
-
-class UserDetail(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
-    authentication_classes = (authentication.SessionAuthentication, )
-
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-class Logout(APIView):
-    def post(self, request):
-        logout(request)
-        return Response(status=status.HTTP_200_OK)
-
-'''
-    Part responsible for handle view using jwt token 
-'''
-
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class LoginTokenView(APIView):
@@ -118,21 +77,43 @@ class ValidateToken(APIView):
     def get(self, request):
         return Response(data={'valid': True}, status=status.HTTP_200_OK)
 
-class UserDetailToken(APIView):
+
+class SingleUserDetail(RetrieveUpdateDestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (JWTAuthentication,)
+    serializer_class = UserDetailSerializer
 
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            user = self.request.user
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error':str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            user = self.request.user
+            data = self.request.data
+            serializer = self.get_serializer(user, data)
+            if serializer.is_valid():
+                serializer.update(user, data)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserAllView(ListAPIView):
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (JWTAuthentication, )
-    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
 
-    def get(self, request, *args, **kwargs):
+    def get_queryset(self):
+        return CustomUser.objects.all()
+
+    def list(self, request, *args, **kwargs):
         try:
             data = self.get_queryset()
             serializer = self.get_serializer(data, many=True)
@@ -141,25 +122,44 @@ class UserAllView(ListAPIView):
         except Exception as e:
             return Response({'error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class UserDetailView(RetrieveAPIView):
-    from django.forms import model_to_dict
+
+class PkUserDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (JWTAuthentication, )
     lookup_url_kwarg = 'pk'
     lookup_field = 'pk'
     serializer_class = UserSerializer
-    queryset = CustomUser.objects.get(pk=1)
 
-    # def get_queryset(self):
-    #     lookup_value = self.kwargs.get(self.lookup_url_kwarg)
-    #     return CustomUser.objects.filter(pk=lookup_value)
+    def get_queryset(self):
+        user_pk = self.kwargs.get(self.lookup_url_kwarg)
+        return CustomUser.objects.filter(id=user_pk)
 
-    def get_object(self):
+    def retrieve(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=self.get_queryset(), many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            user_instance = request.user
+            print(user_instance.show_permissions())
+            print(user_instance.has_perm('is_active'))
+            user = self.get_object()
+            user_serializer = self.get_serializer(user)
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error':str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data={'error': str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            current_user = request.user
+            modified_user = self.get_queryset()
+            serializer = UserDetailSerializer(data=data, partial=True)
+            if serializer.is_valid():
+                mod_user = serializer.update(modified_user, data)
+                mod_user.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RegisterUserView(CreateAPIView):
     permission_classes = (permissions.AllowAny, )

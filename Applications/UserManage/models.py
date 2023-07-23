@@ -35,3 +35,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         for field in fields:
             json_data[field] = getattr(self, field)
         return json_data
+
+    def show_permissions(self):
+        return f"Admin:{self.is_admin} Superuser:{self.is_superuser} "\
+               f"Staff:{self.is_staff}"
