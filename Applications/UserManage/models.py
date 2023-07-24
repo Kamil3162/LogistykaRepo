@@ -43,7 +43,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     phone_number = models.IntegerField(max_length=9, unique=True)
     zip_code = models.CharField(
         max_length=6,
-        validators=[street_name_validator]
     )
     avaiable = models.CharField(
         max_length=8,
@@ -65,16 +64,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         #        f"{self.last_name} Phone Number {self.phone_number}"
         return f'{self.first_name} {self.last_name}'
 
-    def to_json(self):
-        json_data = {}
-        fields = self._meta.fields
-        for field in fields:
-            json_data[field] = getattr(self, field)
-        return json_data
-
     def show_permissions(self):
         return f"Admin:{self.is_admin} Superuser:{self.is_superuser} "\
                f"Staff:{self.is_staff}"
 
     def all_fields(self):
         return self.clean_fields()
+

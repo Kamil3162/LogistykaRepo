@@ -92,7 +92,7 @@ class SingleUserDetail(RetrieveUpdateDestroyAPIView):
             return Response(data={'error':str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def partial_update(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             user = self.request.user
             data = self.request.data

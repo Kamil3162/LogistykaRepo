@@ -15,5 +15,4 @@ urlpatterns = [
     path('all-users/', views.UserAllView.as_view(), name='all-users'),
     path('register/token', views.RegisterUserView.as_view(), name='register-users'),
     path('user/<int:pk>', views.PkUserDetailView.as_view(), name='user-detail'),
-
 ]

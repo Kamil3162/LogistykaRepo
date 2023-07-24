@@ -4,7 +4,6 @@ from rest_framework.authentication import authenticate
 from rest_framework.exceptions import ValidationError
 from django.db import IntegrityError
 
-
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=60)
     password = serializers.CharField(max_length=30)
@@ -51,6 +50,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = '__all__'
 
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password')
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()
+
+        if password is not None:
+            instance.set_password(password)
+            instance.save()
+
+        return instance
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,7 +70,13 @@ class UserDetailSerializer(serializers.ModelSerializer):
                    'is_admin', 'is_staff', 'groups', 'user_permissions')
 
     def update(self, instance, validated_data):
+        password = validated_data.pop('password')
         for field, value in validated_data.items():
             setattr(instance, field, value)
+
+        instance.save()
+        if password is not None:
+            instance.set_password(password)
+            instance.save()
         return instance
 

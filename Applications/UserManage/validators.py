@@ -17,7 +17,7 @@ def street_name_validator(street_name):
 
 
 def zip_code_validator(zip_code):
-    pattern = r'^\d{2}-d{3}$'
+    pattern = r'^\d{2}[-\s]?(?:\d{3})?$'
     check_status = re.match(pattern, zip_code)
     if not check_status:
         raise ValidationError("Improper data")

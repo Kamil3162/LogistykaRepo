@@ -1,7 +1,4 @@
 from django.contrib.auth.models import BaseUserManager
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.hashers import BasePasswordHasher, get_hasher, identify_hasher, PBKDF2PasswordHasher
-
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, first_name, last_name,
@@ -57,9 +54,9 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_admin(self, first_name, last_name,
-                    email, city, phone_number,
-                    zip_code, password=None, house_number=None,
-                    apartment_number=None, street=None, **extra_fields):
+                     email, city, phone_number,
+                     zip_code, password=None, house_number=None,
+                     apartment_number=None, street=None, **extra_fields):
         user = self.create_user(
             first_name=first_name,
             last_name=last_name,

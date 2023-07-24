@@ -149,6 +149,8 @@ USE_TZ = True
 
 AUTH_USER_MODEL = "UserManage.CustomUser"
 
+APPEND_SLASH = False
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
