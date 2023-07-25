@@ -49,6 +49,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         choices=AVAILABLE_CHOICES,
         default='Dostepny'
     )
+    own_car = models.BooleanField(blank=False, default=False)
+
     objects = CustomUserManager()
 
     is_active = models.BooleanField(default=True)

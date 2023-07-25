@@ -21,7 +21,8 @@ from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
     UserSerializer,
-    UserDetailSerializer
+    UserDetailSerializer,
+    UserPermissionSerializer
 )
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -162,6 +163,18 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class UserPermissionView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication, )
+
+    def get(self, request):
+        try:
+            user = request.user
+            serializer = UserPermissionSerializer(instance=user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RegisterUserView(CreateAPIView):
     permission_classes = (permissions.AllowAny, )

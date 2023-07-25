@@ -80,3 +80,15 @@ class UserDetailSerializer(serializers.ModelSerializer):
             instance.save()
         return instance
 
+
+class UserPermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['is_active', 'is_staff', 'is_admin', 'is_superuser']
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+

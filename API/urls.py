@@ -1,5 +1,6 @@
 from django.urls import path
 from Applications.UserManage import views
+from Applications.TruckManage import views as truck_views
 from rest_framework_simplejwt import views as jwt_views
 
 urlpatterns = [
@@ -15,4 +16,7 @@ urlpatterns = [
     path('all-users/', views.UserAllView.as_view(), name='all-users'),
     path('register/token', views.RegisterUserView.as_view(), name='register-users'),
     path('user/<int:pk>', views.PkUserDetailView.as_view(), name='user-detail'),
+    path('user-permissions/', views.UserPermissionView.as_view(), name='user-permissions'),
+    path('truck-create/', truck_views.TruckCreate.as_view(), name='truck-create'),
+    path('truck/<int:pk>', truck_views.TruckDetailView.as_view(), name='truck-detail')
 ]
