@@ -14,7 +14,7 @@ class Truck(models.Model):
     power = models.IntegerField(blank=False,
                                 validators=[MinValueValidator(300),
                                             MaxValueValidator(999)])
-    registration_number = models.CharField(max_length=8,
+    registration_number = models.CharField(max_length=9,
                                            blank=False,
                                            validators=[
                                                registration_num_validator],
@@ -39,5 +39,27 @@ class Truck(models.Model):
 
     def truck_list(self):
         trucks = []
+
+class TruckEquipment(models.Model):
+    truck = models.ForeignKey(Truck,
+                              on_delete=models.CASCADE,
+                              blank=False)
+    chest = models.BooleanField(default=True, blank=False)
+    chains = models.BooleanField(default=True, blank=False)
+    jack_hitch = models.BooleanField(default=True, blank=False)
+    planetar_key = models.BooleanField(default=True, blank=False)
+    manometer = models.BooleanField(default=True, blank=False)
+    tire_pumping_wire = models.BooleanField(default=True, blank=False)
+    complete_status = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'Truck equpment TruckID:{self.truck.id}'
+
+    def status_checker(self):
+        if all(self.chest, self.jack_hitch,
+               self.planetar_key, self.manometer, self.tire_pumping_wire):
+            self.complete_status = True
+        else:
+            self.complete_status = False
 
 
