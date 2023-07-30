@@ -29,16 +29,16 @@ class Truck(models.Model):
     def __str__(self):
         return self.registration_number
 
-    def set_availability(self, state):
-        choice_dict = dict(self.CHOICES)
-        print(choice_dict)
-        try:
-            self.avaiable = choice_dict[state]
-        except KeyError:
-            raise ValueError(f"{state} is not a valid choice for avaiable.")
-
     def truck_list(self):
         trucks = []
+
+    def update_state(self, key):
+        try:
+            new_state = self.CHOICES[key]
+            self.avaiable = new_state
+            self.save()
+        except KeyError:
+            raise KeyError("Improper option key")
 
 class TruckEquipment(models.Model):
     truck = models.ForeignKey(Truck,
@@ -62,4 +62,7 @@ class TruckEquipment(models.Model):
         else:
             self.complete_status = False
 
-
+    def update_components(self, data):
+        for key, value in data.items():
+            setattr(self, key, value)
+        self.save()
