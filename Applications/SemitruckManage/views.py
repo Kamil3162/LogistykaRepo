@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveUpdateDestroyAPIView
@@ -8,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import SemiTrailerSerializer, SemiTrailerEquipmentSerializer
+from .models import SemiTrailer
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 class SemiTruckCreate(CreateAPIView):
     permission_classes = (IsAuthenticated, )
@@ -30,21 +31,44 @@ class SemiTruckDetail(RetrieveUpdateDestroyAPIView):
     serializer_class = SemiTrailerSerializer
     lookup_url_kwarg = 'pk'
 
-    def get_queryset(self):
-        pass
-
     def get_object(self):
-        pass
+        try:
+            pk = self.kwargs.get('pk')
+            semi_trailer = SemiTrailer.objects.get(pk=pk)
+            return semi_trailer
+        except Exception as e:
+            raise Exception(f'Error:{str(e)}')
 
     def retrieve(self, request, *args, **kwargs):
-        pass
+        try:
+            semi_trailer = self.get_object()
+            serializer = SemiTrailerSerializer(instance=semi_trailer)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response(data={'error':str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(data={'error':str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def update(self, request, *args, **kwargs):
-        pass
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            semi_trailer = self.get_object()
+            serializer = SemiTrailerSerializer(
+                data=data,
+                instance=semi_trailer,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.update(semi_trailer, data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error':str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, *args, **kwargs):
         pass
-
 
 class SemiTruckEquipmentCreate(CreateAPIView):
     permission_classes = (IsAuthenticated,)

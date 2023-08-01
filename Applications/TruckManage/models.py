@@ -16,8 +16,6 @@ class Truck(models.Model):
                                             MaxValueValidator(999)])
     registration_number = models.CharField(max_length=9,
                                            blank=False,
-                                           validators=[
-                                               registration_num_validator],
                                            unique=True)
     driven_length = models.IntegerField(blank=False)
     production_date = models.DateField(blank=False)
@@ -51,6 +49,7 @@ class TruckEquipment(models.Model):
     manometer = models.BooleanField(default=True, blank=False)
     tire_pumping_wire = models.BooleanField(default=True, blank=False)
     complete_status = models.BooleanField(default=True)
+    photo = models.ImageField(upload_to='media/', blank=True)
 
     def __str__(self):
         return f'Truck equpment TruckID:{self.truck.id}'

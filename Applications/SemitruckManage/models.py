@@ -9,10 +9,10 @@ class SemiTrailer(models.Model):
     production_year = models.DateField()
     registration_number = models.CharField(max_length=9,
                                            blank=False,
-                                           validators=[registration_num_validator],
                                            unique=True)
 
     semi_note = models.BooleanField(default=True, blank=False)
+    photo = models.ImageField(upload_to='media/', blank=True)
 
     def __str__(self):
         return self.registration_number
