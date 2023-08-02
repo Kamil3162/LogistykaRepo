@@ -10,20 +10,29 @@ class Truck(models.Model):
         ('Awaria', 'Awaria')
     )
     brand = models.CharField(max_length=20, blank=False)
+
     model = models.CharField(max_length=40, blank=False)
+
     power = models.IntegerField(blank=False,
                                 validators=[MinValueValidator(300),
                                             MaxValueValidator(999)])
+
     registration_number = models.CharField(max_length=9,
                                            blank=False,
                                            unique=True)
+
     driven_length = models.IntegerField(blank=False)
+
     production_date = models.DateField(blank=False)
-    avaiable = models.CharField(choices=CHOICES,
+
+    available = models.CharField(choices=CHOICES,
                                 blank=False,
                                 max_length=6,
                                 default='Wolny')
 
+    photo = models.ImageField(upload_to='media/',
+                              blank=True,
+                              null=True)
     def __str__(self):
         return self.registration_number
 

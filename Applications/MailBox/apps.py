@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ReceivmentmanageConfig(AppConfig):
+class MailboxConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'Applications.ReceivmentManage'
+    name = 'Applications.MailBox'

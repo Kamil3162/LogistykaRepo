@@ -9,10 +9,7 @@ class SemiTrailerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             semi_trailer = SemiTrailer.objects.create(
-                brand=validated_data.get('brand'),
-                model=validated_data.get('model'),
-                production_year=validated_data.get('production_year'),
-                registration_number=validated_data.get('registration_number')
+                **validated_data
             )
 
         except IntegrityError:

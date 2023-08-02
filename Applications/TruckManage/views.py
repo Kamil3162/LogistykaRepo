@@ -24,7 +24,7 @@ class TruckCreate(CreateAPIView):
             # parse and change format of our data
             data = request.data
             serializer = TruckSerializer(data=data)
-
+            print(request.user)
             # part of validation and create truck
             serializer.is_valid(raise_exception=True)
             truck = serializer.create(data)

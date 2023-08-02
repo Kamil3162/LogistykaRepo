@@ -4,6 +4,12 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class SemiTrailer(models.Model):
+    CHOICES = (
+        ('Wolny', 'Wolny'),
+        ('Zajety', 'Zajety'),
+        ('Awaria', 'Awaria')
+    )
+
     brand = models.CharField(max_length=20, blank=False)
     model = models.CharField(max_length=40, blank=False)
     production_year = models.DateField()
@@ -12,7 +18,13 @@ class SemiTrailer(models.Model):
                                            unique=True)
 
     semi_note = models.BooleanField(default=True, blank=False)
-    photo = models.ImageField(upload_to='media/', blank=True)
+    photo = models.ImageField(upload_to='media/',
+                              blank=True,
+                              null=True)
+    available = models.CharField(choices=CHOICES,
+                                 blank=False,
+                                 default='Wolny',
+                                 max_length=6)
 
     def __str__(self):
         return self.registration_number
