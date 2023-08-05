@@ -18,7 +18,7 @@ class SemiTrailer(models.Model):
                                            unique=True)
 
     semi_note = models.BooleanField(default=True, blank=False)
-    photo = models.ImageField(upload_to='media/',
+    photo = models.ImageField(upload_to='media',
                               blank=True,
                               null=True)
     available = models.CharField(choices=CHOICES,

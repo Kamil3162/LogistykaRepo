@@ -10,7 +10,14 @@ class TruckSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             truck = Truck.objects.create(
-                **validated_data
+                brand=validated_data.get('brand'),
+                model=validated_data.get('model'),
+                power=validated_data.get('power'),
+                registration_number=validated_data.get('registration_number'),
+                driven_length=validated_data.get('driven_length'),
+                production_date=validated_data.get('production_date'),
+                available=validated_data.get('available'),
+                photo=validated_data.get('photo'),
             )
             return truck
         except IntegrityError:

@@ -30,7 +30,7 @@ class Truck(models.Model):
                                 max_length=6,
                                 default='Wolny')
 
-    photo = models.ImageField(upload_to='media/',
+    photo = models.ImageField(upload_to='media',
                               blank=True,
                               null=True,
                               default=None)
