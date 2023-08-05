@@ -32,7 +32,9 @@ class Truck(models.Model):
 
     photo = models.ImageField(upload_to='media/',
                               blank=True,
-                              null=True)
+                              null=True,
+                              default=None)
+
     def __str__(self):
         return self.registration_number
 

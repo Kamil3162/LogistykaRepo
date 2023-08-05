@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Receivment
+from .models import Receivment, SemiTrailerReportPhoto, TruckReportPhoto
 class ReceivmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Receivment
@@ -24,7 +24,7 @@ class ReceivmentSerializer(serializers.ModelSerializer):
                 raise ValidationError("You have active receivment, "
                                       "you cant have more than one")
             elif truck.avaiable is not state and \
-                semi_trailer.statys is not state :
+                semi_trailer.status is not state :
                 raise ValidationError("You cant assign busy truck or semitrailer")
 
             receivment = Receivment.objects.create(
@@ -42,4 +42,24 @@ class ReceivmentSerializer(serializers.ModelSerializer):
         instance.save()
 
 
+class TruckReportPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TruckReportPhoto
+        fields = '__all__'
 
+    def create(self, validated_data):
+        try:
+            truck_photo = TruckReportPhoto.objects.create(**validated_data)
+        except Exception as e:
+            raise Exception(str(e))
+
+class SemiTrailerReportPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SemiTrailerReportPhoto
+        fields = '__all__'
+
+    def create(self, validated_data):
+        try:
+            semitrailer = SemiTrailerReportPhoto.objects.create(**validated_data)
+        except Exception as e:
+            raise Exception(str(e))

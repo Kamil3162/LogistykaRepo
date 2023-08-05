@@ -9,6 +9,7 @@ from .serializers import (
     TruckSerializer
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.parsers import MultiPartParser
 from .models import Truck
 from django.http import Http404
 
@@ -17,14 +18,18 @@ from django.http import Http404
 class TruckCreate(CreateAPIView):
     permission_classes = (IsAuthenticated, )
     authentication_classes = (JWTAuthentication, )
+    parser_classes = (MultiPartParser, )
     serializer_class = TruckSerializer
 
     def create(self, request, *args, **kwargs):
         try:
             # parse and change format of our data
             data = request.data
+            print(data)
+            data['power'] = int(data.get('power'))
+            data['driven_length'] = int(data.get('driven_length'))
             serializer = TruckSerializer(data=data)
-            print(request.user)
+
             # part of validation and create truck
             serializer.is_valid(raise_exception=True)
             truck = serializer.create(data)
