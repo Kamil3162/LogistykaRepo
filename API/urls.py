@@ -1,8 +1,13 @@
-from django.urls import path
+from django.urls import path,include
 from Applications.UserManage import views
 from Applications.TruckManage import views as truck_views
 from Applications.SemitruckManage import views as semitrailer_views
 from rest_framework_simplejwt import views as jwt_views
+from rest_framework import routers
+
+router = routers.DefaultRouter()
+router.register(r'trucks', truck_views.TruckViewSet, basename='trucks')
+router.register(r'semitrailers', semitrailer_views.SemiTruckViewSet, basename='semitrailers')
 
 urlpatterns = [
     path('login/token', jwt_views.TokenObtainPairView.as_view(), name='token'),
@@ -25,18 +30,14 @@ urlpatterns = [
          name='user-detail'),
     path('user-permissions/', views.UserPermissionView.as_view(),
          name='user-permissions'),
-    path('truck-create/', truck_views.TruckCreate.as_view(),
-         name='truck-create'),
-    path('truck/<int:pk>', truck_views.TruckDetailView.as_view(),
-         name='truck-detail'),
-    path('semitrailer-create/', semitrailer_views.SemiTruckCreate.as_view(),
-         name='semitrailer-create'),
-    path('semitrailer/<int:pk>/', semitrailer_views.SemiTruckDetail.as_view(),
-         name='semitrailer-detail'),
     path('semitrailereqipment-create/',
          semitrailer_views.SemiTruckEquipmentCreate.as_view(),
          name='semitrailerequipment-create'),
     path('semitrailereqipment/<int:pk>/',
          semitrailer_views.SemiTruckEquipmentDetail.as_view(),
-         name='semitrailerequipment-detail')
+         name='semitrailerequipment-detail'),
+    # path('semitrailer-all/',
+    #      semitrailer_views.SemiTrailerList.as_view(),
+    #      name='semitrailer-list'),
+    path('', include(router.urls)),
 ]

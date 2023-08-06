@@ -35,8 +35,7 @@ class Truck(models.Model):
                               null=True,
                               default=None)
 
-    def __str__(self):
-        return self.registration_number
+
 
     def truck_list(self):
         trucks = []
@@ -48,6 +47,12 @@ class Truck(models.Model):
             self.save()
         except KeyError:
             raise KeyError("Improper option key")
+
+    def __str__(self):
+        return self.registration_number
+
+    def __repr__(self):
+        return f'{self.__class__.__qualname__}'
 
 class TruckEquipment(models.Model):
     truck = models.ForeignKey(Truck,
