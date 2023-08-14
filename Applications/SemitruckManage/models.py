@@ -29,6 +29,27 @@ class SemiTrailer(models.Model):
     def __str__(self):
         return self.registration_number
 
+    def update_state(self, key):
+        print("update")
+        try:
+            self.available = dict(self.CHOICES)[key]
+            self.save()
+        except KeyError:
+            raise KeyError("Invalid key of state")
+
+    @property
+    def is_available(self):
+        return self.available == 'Wolny'
+
+    @is_available.setter
+    def is_available(self, value):
+        try:
+            state = self.CHOICES[value]
+            self.available = state
+            self.save()
+        except KeyError:
+            raise KeyError("Invalid key data")
+
 class SemiTrailerEquipment(models.Model):
     CHOICES = (
         ('Wolny', 'Wolny'),
@@ -59,9 +80,6 @@ class SemiTrailerEquipment(models.Model):
                                 max_length=6,
                                 default='Wolny')
 
-    def __str__(self):
-        return self.semi_trailer.id
-
     def update(self, key):
         try:
             new_state = self.CHOICES[key]
@@ -69,3 +87,5 @@ class SemiTrailerEquipment(models.Model):
             self.save()
         except KeyError:
             raise KeyError("Improper option key")
+    def __str__(self):
+        return self.semi_trailer.id

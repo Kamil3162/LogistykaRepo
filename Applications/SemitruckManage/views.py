@@ -28,8 +28,6 @@ class SemiTruckViewSet(ModelViewSet):
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
     def get_object(self):
         try:
             pk = self.kwargs.get('pk')

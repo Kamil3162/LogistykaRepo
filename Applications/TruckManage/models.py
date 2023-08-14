@@ -35,24 +35,37 @@ class Truck(models.Model):
                               null=True,
                               default=None)
 
-
-
     def truck_list(self):
         trucks = []
 
     def update_state(self, key):
+        print("update")
         try:
-            new_state = self.CHOICES[key]
-            self.avaiable = new_state
+            self.available = dict(self.CHOICES)[key]
+            print(self.available)
             self.save()
         except KeyError:
             raise KeyError("Improper option key")
+
+    @property
+    def is_available(self):
+        return self.available == 'Wolny'
+
+    @is_available.setter
+    def is_available(self, value):
+        try:
+            state = self.CHOICES[value]
+            self.available = state
+            self.save()
+        except KeyError:
+            raise KeyError("Invalid key data")
 
     def __str__(self):
         return self.registration_number
 
     def __repr__(self):
         return f'{self.__class__.__qualname__}'
+
 
 class TruckEquipment(models.Model):
     truck = models.ForeignKey(Truck,
@@ -81,3 +94,4 @@ class TruckEquipment(models.Model):
         for key, value in data.items():
             setattr(self, key, value)
         self.save()
+

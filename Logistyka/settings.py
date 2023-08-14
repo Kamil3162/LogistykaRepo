@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'Applications.SemitruckManage',
+    'Applications.ReceivmentManage',
     'Applications.TruckManage',
     'Applications.UserManage',
     'Applications.MailBox',

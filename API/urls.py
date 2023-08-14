@@ -2,12 +2,14 @@ from django.urls import path,include
 from Applications.UserManage import views
 from Applications.TruckManage import views as truck_views
 from Applications.SemitruckManage import views as semitrailer_views
+from Applications.ReceivmentManage import views as receivment_views
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'trucks', truck_views.TruckViewSet, basename='trucks')
 router.register(r'semitrailers', semitrailer_views.SemiTruckViewSet, basename='semitrailers')
+router.register('receivments', receivment_views.ReceivmentViewSet, basename='receivments')
 
 urlpatterns = [
     path('login/token', jwt_views.TokenObtainPairView.as_view(), name='token'),

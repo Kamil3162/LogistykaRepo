@@ -73,3 +73,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def all_fields(self):
         return self.clean_fields()
 
+    # def get_all_permissions(self, obj=None):
+    #     pass
+    #
+    # def get_user_permissions(self, obj=None):
+    #     pass
+    #
+    # def has_perm(self, perm, obj=None):
+    #     pass
