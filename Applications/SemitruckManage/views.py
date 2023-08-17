@@ -13,8 +13,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 
 class SemiTruckViewSet(ModelViewSet):
-    permission_classes = (IsAuthenticated, )
-    authentication_classes = (JWTAuthentication, )
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
     serializer_class = SemiTrailerSerializer
     lookup_url_kwarg = 'pk'
     queryset = SemiTrailer.objects.all()

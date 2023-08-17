@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import CustomUser
 from rest_framework.authentication import authenticate
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import IntegrityError
 
 class UserLoginSerializer(serializers.Serializer):
@@ -91,4 +92,5 @@ class UserPermissionSerializer(serializers.ModelSerializer):
             setattr(instance, key, value)
         instance.save()
         return instance
+
 

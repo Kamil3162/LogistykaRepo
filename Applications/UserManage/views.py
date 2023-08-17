@@ -31,6 +31,7 @@ from .models import CustomUser
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class LoginTokenView(APIView):
     permission_classes = (permissions.AllowAny, )
@@ -87,6 +88,7 @@ class SingleUserDetail(RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             user = self.request.user
+            print(user.get_all_permissions())
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -97,7 +99,13 @@ class SingleUserDetail(RetrieveUpdateDestroyAPIView):
         try:
             user = self.request.user
             data = self.request.data
-            serializer = self.get_serializer(user, data)
+
+            serializer = self.get_serializer(
+                instance=user,
+                data=data,
+                partial=True
+            )
+
             if serializer.is_valid():
                 serializer.update(user, data)
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -152,7 +160,9 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
             data = request.data
             current_user = request.user
             modified_user = self.get_queryset()
-            serializer = self.get_serializer(instance=modified_user, data=data, partial=True)
+            serializer = self.get_serializer(instance=modified_user,
+                                             data=data,
+                                             partial=True)
             if serializer.is_valid():
                 mod_user = serializer.update(modified_user, data)
                 mod_user.save()
@@ -211,3 +221,4 @@ class RegisterUserView(CreateAPIView):
     #     context = super(RegisterUserView, self).default_response_headers()
     #     print("this is default response header")
     #     print(context)
+
