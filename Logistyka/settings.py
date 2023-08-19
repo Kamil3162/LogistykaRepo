@@ -103,7 +103,7 @@ WSGI_APPLICATION = 'Logistyka.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'LogRepo',
+        'NAME': 'logrep',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

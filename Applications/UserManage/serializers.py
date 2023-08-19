@@ -45,7 +45,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise IntegrityError("User exists with following data")
         except ValueError:
             raise ValueError("You passed improper data")
-
+        return user
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser

@@ -61,6 +61,26 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    class Meta:
+        permissions = [
+            ('view_user_details', 'Can view user details'),
+            ('view_own_details', 'Can view own user details'),
+            ('update_user_details', 'Can update user details'),
+            ('update_own_user_details', 'Can update own user details'),
+            ('delete_own_account', 'Can delete own account'),
+            ('delete_user_account', 'Can delete user account'),
+            ('create_user_account', 'Can create user account'),
+            ('view_truck_details', 'Can view truck details'),
+            ('update_truck_details', 'Can update truck details'),
+            ('delete_truck_details', 'Can delete truck'),
+            ('create_truck', 'Can delete truck'),
+            ('view_semitrailer_details', 'Can view semitrailer details'),
+            ('update_semitrailer_details', 'Can update semitrailer details'),
+            ('delete_semitrailer_details', 'Can delete semitrailer'),
+            ('create_semitrailer', 'Can create semitrailer'),
+            ('create_receivment', 'Can create receivment'),
+        ]
+
     def __str__(self):
         # return f"Custom user model {self.first_name} " \
         #        f"{self.last_name} Phone Number {self.phone_number}"

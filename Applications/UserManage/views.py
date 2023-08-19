@@ -32,6 +32,7 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.models import Group, Permission
 
 class LoginTokenView(APIView):
     permission_classes = (permissions.AllowAny, )
@@ -88,11 +89,18 @@ class SingleUserDetail(RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             user = self.request.user
-            print(user.get_all_permissions())
+            group_permission = user.groups.all()
+            user_group = Group.objects.get(name='Driver')
+            user_group_permission = CustomUser.objects.select_related(
+            )
+            all_assigned_groups = request.user.groups.all()
+            print(all_assigned_groups)
+            all_permissions = all_assigned_groups[0].permissions.values_list('codename', flat=True)
+            print(all_permissions)
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(data={'error':str(e)},
+            return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, *args, **kwargs):
@@ -198,7 +206,9 @@ class RegisterUserView(CreateAPIView):
             sended_data = request.data
             serializer = self.get_serializer(data=sended_data)
             if serializer.is_valid():
-                serializer.check_data(sended_data)
+                user = serializer.check_data(sended_data)
+                user_group = Group.objects.get(name='Driver')
+                user.groups.add(user_group)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
