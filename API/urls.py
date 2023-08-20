@@ -1,5 +1,5 @@
 from django.urls import path,include
-from Applications.UserManage import views
+from Applications.UserManage import views as user_views
 from Applications.TruckManage import views as truck_views
 from Applications.SemitruckManage import views as semitrailer_views
 from Applications.ReceivmentManage import views as receivment_views
@@ -12,25 +12,25 @@ router.register(r'semitrailers', semitrailer_views.SemiTruckViewSet, basename='s
 router.register('receivments', receivment_views.ReceivmentViewSet, basename='receivments')
 
 urlpatterns = [
-    path('login/token', jwt_views.TokenObtainPairView.as_view(), name='token'),
+    path('login/token', user_views.LoginTokenView.as_view(), name='token'),
     path('token/refresh', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('validate-token/', jwt_views.TokenVerifyView.as_view(),
          name='validate-token'),
     # path('', views.LoginTokenView.as_view(), name='token_refresh'),
-    path('home/token', views.HomeTokenView.as_view(),
+    path('home/token', user_views.HomeTokenView.as_view(),
          name='home_token'),
-    path('detail-user/', views.SingleUserDetail.as_view(),
+    path('detail-user/', user_views.SingleUserDetail.as_view(),
          name='details-user'),
-    path('logout-token/', views.LogoutTokenView.as_view(),
+    path('logout-token/', user_views.LogoutTokenView.as_view(),
          name='logout-token'),
     ####################
-    path('all-users/', views.UserAllView.as_view(),
+    path('all-users/', user_views.UserAllView.as_view(),
          name='all-users'),
-    path('register/token', views.RegisterUserView.as_view(),
+    path('register/token', user_views.RegisterUserView.as_view(),
          name='register-users'),
-    path('user/<int:pk>', views.PkUserDetailView.as_view(),
+    path('user/<int:pk>', user_views.PkUserDetailView.as_view(),
          name='user-detail'),
-    path('user-permissions/', views.UserPermissionView.as_view(),
+    path('user-permissions/', user_views.UserPermissionView.as_view(),
          name='user-permissions'),
     path('semitrailereqipment-create/',
          semitrailer_views.SemiTruckEquipmentCreate.as_view(),

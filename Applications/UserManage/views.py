@@ -33,22 +33,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import Group, Permission
-
-class LoginTokenView(APIView):
+from .auth.login_token_serializer import CustomTokenObtainSerializer
+class LoginTokenView(TokenObtainPairView):
     permission_classes = (permissions.AllowAny, )
-
-    def post(self, request):
-        data = request.data
-        serializer = UserLoginSerializer(data=data)
-        if serializer.is_valid():
-
-            user = serializer.check_user(data)
-            refresh = RefreshToken.for_user(user)
-
-            return Response(data={
-                'refresh': str(refresh),
-                'access': str(refresh.access_token)
-            })
+    serializer_class = CustomTokenObtainSerializer
 
 class HomeTokenView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -94,9 +82,7 @@ class SingleUserDetail(RetrieveUpdateDestroyAPIView):
             user_group_permission = CustomUser.objects.select_related(
             )
             all_assigned_groups = request.user.groups.all()
-            print(all_assigned_groups)
             all_permissions = all_assigned_groups[0].permissions.values_list('codename', flat=True)
-            print(all_permissions)
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
