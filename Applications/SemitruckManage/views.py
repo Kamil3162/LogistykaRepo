@@ -21,6 +21,7 @@ class SemiTruckViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         try:
+
             semi_trailers = self.get_queryset()
             serializer = self.get_serializer(instance=semi_trailers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -38,6 +39,12 @@ class SemiTruckViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            print(request.data)
+            if request.data['semi_note'] == 'false':
+                request.data['semi_note'] = False
+            else:
+                request.data['semi_note'] = True
+            print(request.data['production_year'])
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.create(request.data)

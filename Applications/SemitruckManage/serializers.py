@@ -12,11 +12,11 @@ class SemiTrailerSerializer(serializers.ModelSerializer):
                 brand=validated_data.get('brand'),
                 model=validated_data.get('model'),
                 registration_number=validated_data.get('registration_number'),
+                production_year=validated_data.get('production_year'),
                 semi_note=validated_data.get('semi_note'),
                 photo=validated_data.get('photo'),
                 available=validated_data.get('available')
             )
-
         except IntegrityError:
             raise IntegrityError("Following data exists in db change registration number")
         except Exception as e:

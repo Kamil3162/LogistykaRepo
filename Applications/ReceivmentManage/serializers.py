@@ -25,7 +25,6 @@ class ReceivmentSerializer(serializers.ModelSerializer):
             setattr(instance, key, value)
         instance.save()
 
-
 class TruckReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TruckReportPhoto

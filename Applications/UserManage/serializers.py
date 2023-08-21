@@ -6,18 +6,9 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import IntegrityError
 
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=60)
-    password = serializers.CharField(max_length=30)
-
-    def check_user(self, clean_data):
-        try:
-            user = authenticate(
-                username=clean_data['email'],
-                password=clean_data['password']
-            )
-            return user
-        except ValidationError:
-            raise ValidationError("Improper password or login")
+    class Meta:
+        model = CustomUser
+        exclude = ['password','' ]
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,6 +37,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         except ValueError:
             raise ValueError("You passed improper data")
         return user
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser

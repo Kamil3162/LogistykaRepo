@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from ..UserManage.models import CustomUser
 from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
+from .utils.select_manager import ManagerSelect
 from rest_framework.exceptions import ValidationError
 class ReceivmentViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
@@ -21,12 +22,15 @@ class ReceivmentViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            print("esa")
             state_busy = 'Zajety'
+            manager_chose = ManagerSelect()
             data = request.data
 
             sender = get_object_or_404(CustomUser, pk=data.get('sender'))
-            transferring_user = get_object_or_404(CustomUser,
-                                                  pk=data.get('transferring_user'))
+            transferring_user = manager_chose.chose_random_manager()
+            data['transferring_user'] = transferring_user.pk
+
             truck = get_object_or_404(Truck, pk=data.get('truck'))
             semi_trailer = get_object_or_404(SemiTrailer,
                                              pk=data.get('semi_trailer'))
@@ -35,14 +39,18 @@ class ReceivmentViewSet(ModelViewSet):
             status_code = None
 
             '''
-                       This method is invoke when I call is_valid function
-                   '''
+               This method is invoke when I call is_valid function
+           '''
+            print("naura")
+            print(data)
             active_receivments = Receivment.objects.filter(
                 status__exact=False, transferring_user=data['transferring_user']
-            ).first()
+            )
 
-            if active_receivments is not None:
-                return Response(data={"error":"You have active receivment, "
+            print(active_receivments)
+            print("naura")
+            if len(active_receivments) > 0:
+                return Response(data={"error": "You have active receivment, "
                                       "you cant have more than one"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,7 +73,8 @@ class ReceivmentViewSet(ModelViewSet):
                 information_response['success'] = serializer_receivment.data
             else:
                 status_code = status.HTTP_409_CONFLICT
-                information_response['error'] = 'Check user status, truck, semitrailer'
+                information_response['error'] = 'Check user status,\
+                 truck, semitrailer'
 
             return Response(data=information_response, status=status_code)
         except Exception as e:
