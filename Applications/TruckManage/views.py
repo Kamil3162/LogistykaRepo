@@ -7,12 +7,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import (
-    TruckSerializer
+    TruckSerializer,
+    TruckEquipmentSerializer
 )
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import action
-from .models import Truck
+from .models import Truck, TruckEquipment
 from django.http import Http404
 
 # find . -path "*/__pycache__" -type d -exec rm -r {} ';'
@@ -83,3 +84,50 @@ class TruckViewSet(ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
+
+class TruckEquipmentCreateView(CreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    serializer_class = TruckEquipmentSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+class TruckEquipmentDetailView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    serializer_class = TruckEquipmentSerializer
+    lookup_url_kwarg = 'pk'
+
+    def get_object(self):
+        truck_id = self.kwargs.get(self.lookup_url_kwarg)
+        return TruckEquipment.objects.get(truck_id=truck_id)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            truck_equipment = self.get_object()
+            serializer = self.get_serializer(instace=truck_equipment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            data = self.request
+            semi_equipment = self.get_object()
+            serializer = self.get_serializer(data=data,
+                                             instance=semi_equipment,
+                                             partial=True)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)

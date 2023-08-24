@@ -30,7 +30,6 @@ class SemiTrailer(models.Model):
         return self.registration_number
 
     def update_state(self, key):
-        print("update")
         try:
             self.available = dict(self.CHOICES)[key]
             self.save()
@@ -51,12 +50,6 @@ class SemiTrailer(models.Model):
             raise KeyError("Invalid key data")
 
 class SemiTrailerEquipment(models.Model):
-    CHOICES = (
-        ('Wolny', 'Wolny'),
-        ('Zajety', 'Zajety'),
-        ('Awaria', 'Awaria')
-    )
-
     semi_trailer = models.OneToOneField(SemiTrailer,
                                         on_delete=models.CASCADE,
                                         blank=False)
@@ -75,17 +68,7 @@ class SemiTrailerEquipment(models.Model):
     ladder = models.BooleanField(default=True, blank=False)
     roof_stick = models.BooleanField(default=True, blank=False)
     dimenstion_board = models.BooleanField(default=True, blank=False)
-    status = models.CharField(choices=CHOICES,
-                                blank=False,
-                                max_length=6,
-                                default='Wolny')
 
-    def update(self, key):
-        try:
-            new_state = self.CHOICES[key]
-            self.status = new_state
-            self.save()
-        except KeyError:
-            raise KeyError("Improper option key")
+
     def __str__(self):
         return self.semi_trailer.id

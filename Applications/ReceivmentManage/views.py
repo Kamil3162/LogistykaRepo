@@ -14,6 +14,8 @@ from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from rest_framework.exceptions import ValidationError
+
+
 class ReceivmentViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication, )
@@ -22,7 +24,6 @@ class ReceivmentViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            print("esa")
             state_busy = 'Zajety'
             manager_chose = ManagerSelect()
             data = request.data
@@ -38,23 +39,17 @@ class ReceivmentViewSet(ModelViewSet):
             information_response = dict()
             status_code = None
 
-            '''
-               This method is invoke when I call is_valid function
-           '''
-            print("naura")
-            print(data)
+            # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(
                 status__exact=False, transferring_user=data['transferring_user']
             )
 
-            print(active_receivments)
-            print("naura")
             if len(active_receivments) > 0:
                 return Response(data={"error": "You have active receivment, "
                                       "you cant have more than one"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            if sender.is_active and truck.is_available\
+            if sender.is_staff and truck.is_available\
                     and semi_trailer.is_available:
                 serializer_receivment = self.get_serializer(data=data)
                 serializer_receivment.is_valid(raise_exception=True)

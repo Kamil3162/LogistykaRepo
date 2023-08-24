@@ -1,6 +1,7 @@
 from rest_framework.generics import (
     CreateAPIView,
-    RetrieveUpdateDestroyAPIView
+    RetrieveUpdateDestroyAPIView,
+    ListAPIView
 )
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -8,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import SemiTrailerSerializer, SemiTrailerEquipmentSerializer
-from .models import SemiTrailer
+from .models import SemiTrailer, SemiTrailerEquipment
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 
@@ -96,20 +97,54 @@ class SemiTruckEquipmentCreate(CreateAPIView):
             serializer.create(request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response(data={'error':str(e)},
+            return Response(data={'error': str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
 
 class SemiTruckEquipmentDetail(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)
     serializer_class = SemiTrailerEquipmentSerializer
+    lookup_url_kwarg = 'pk'
+
+    def get_object(self):
+        semitailer_id = self.kwargs.get(self.lookup_url_kwarg)
+        return SemiTrailerEquipment.objects.get(semi_trailer_id=semitailer_id)
 
     def retrieve(self, request, *args, **kwargs):
-        pass
+        try:
+            semi_equipment = self.get_object()
+            serializer = self.get_serializer(instace=semi_equipment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
-        pass
+        try:
+            data = self.request
+            semi_equipment = self.get_object()
+            serializer = self.get_serializer(data=data,
+                                             instance=semi_equipment,
+                                             partial=True)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def delete(self, request, *args, **kwargs):
-        pass
+class SemiTrailerEquipmentList(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
+    serializer_class = SemiTrailerEquipmentSerializer
 
+    def get_queryset(self):
+        return SemiTrailerEquipment.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        try:
+            semi_equipments = self.get_queryset()
+            serializer = self.get_serializer(semi_equipments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)

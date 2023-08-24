@@ -39,7 +39,6 @@ class Truck(models.Model):
         trucks = []
 
     def update_state(self, key):
-        print("update")
         try:
             self.available = dict(self.CHOICES)[key]
             print(self.available)

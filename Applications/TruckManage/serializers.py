@@ -1,4 +1,4 @@
-from Applications.TruckManage.models import Truck
+from Applications.TruckManage.models import Truck, TruckEquipment
 from rest_framework import serializers
 from django.db import IntegrityError
 
@@ -43,3 +43,25 @@ class TruckSerializer(serializers.ModelSerializer):
             raise KeyError("No valid kay in our options")
 
 
+class TruckEquipmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TruckEquipment
+        fields = '__all__'
+
+    def create(self, validated_data):
+        try:
+            truck_equipment = TruckEquipment.objects.create(
+                **validated_data
+            )
+            return truck_equipment
+        except Exception as e:
+            print(str(e))
+
+    def update(self, instance, validated_data):
+        try:
+            for value, key in validated_data:
+                instance.key = value
+            instance.save()
+            return instance
+        except Exception as e:
+            print(str(e))
