@@ -41,7 +41,6 @@ class Truck(models.Model):
     def update_state(self, key):
         try:
             self.available = dict(self.CHOICES)[key]
-            print(self.available)
             self.save()
         except KeyError:
             raise KeyError("Improper option key")

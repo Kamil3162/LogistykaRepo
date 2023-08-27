@@ -15,8 +15,13 @@ from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from rest_framework.exceptions import ValidationError
 
+class ReceivmentModelViewSet(ModelViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.JWTAuthentication,)
+    serializer_class = ReceivmentSerializer
+    queryset = Receivment.objects.all()
 
-class ReceivmentViewSet(ModelViewSet):
+class ReceivmentCreateView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication, )
     serializer_class = ReceivmentSerializer
@@ -27,17 +32,21 @@ class ReceivmentViewSet(ModelViewSet):
             state_busy = 'Zajety'
             manager_chose = ManagerSelect()
             data = request.data
-
-            sender = get_object_or_404(CustomUser, pk=data.get('sender'))
             transferring_user = manager_chose.chose_random_manager()
-            data['transferring_user'] = transferring_user.pk
+            sender = get_object_or_404(CustomUser, pk=data.get('sender'))
 
             truck = get_object_or_404(Truck, pk=data.get('truck'))
+
             semi_trailer = get_object_or_404(SemiTrailer,
                                              pk=data.get('semi_trailer'))
 
             information_response = dict()
             status_code = None
+
+            data['transferring_user'] = transferring_user.pk
+            data['sender'] = sender.pk
+            data['truck'] = truck.pk
+            data['semi_trailer'] = semi_trailer.pk
 
             # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(
@@ -49,8 +58,7 @@ class ReceivmentViewSet(ModelViewSet):
                                       "you cant have more than one"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            if sender.is_staff and truck.is_available\
-                    and semi_trailer.is_available:
+            if truck.is_available and semi_trailer.is_available:
                 serializer_receivment = self.get_serializer(data=data)
                 serializer_receivment.is_valid(raise_exception=True)
 

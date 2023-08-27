@@ -69,6 +69,5 @@ class SemiTrailerEquipment(models.Model):
     roof_stick = models.BooleanField(default=True, blank=False)
     dimenstion_board = models.BooleanField(default=True, blank=False)
 
-
     def __str__(self):
         return self.semi_trailer.id

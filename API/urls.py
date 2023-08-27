@@ -9,7 +9,7 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 router.register(r'trucks', truck_views.TruckViewSet, basename='trucks')
 router.register(r'semitrailers', semitrailer_views.SemiTruckViewSet, basename='semitrailers')
-router.register('receivments', receivment_views.ReceivmentViewSet, basename='receivments')
+router.register(r'receivments', receivment_views.ReceivmentModelViewSet, basename='receivments')
 
 urlpatterns = [
     path('login/token', user_views.LoginTokenView.as_view(), name='token'),
@@ -41,6 +41,9 @@ urlpatterns = [
     path('semitrailereqipments/',
          semitrailer_views.SemiTrailerEquipmentList.as_view(),
          name='semitrailerequipment-detail'),
+    path('receivment-create/',
+         receivment_views.ReceivmentCreateView.as_view(),
+         name='receivments'),
     # path('semitrailer-all/',
     #      semitrailer_views.SemiTrailerList.as_view(),
     #      name='semitrailer-list'),
