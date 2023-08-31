@@ -100,6 +100,7 @@ class SemiTruckEquipmentCreate(CreateAPIView):
             return Response(data={'error': str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
 
+
 class SemiTruckEquipmentDetail(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)

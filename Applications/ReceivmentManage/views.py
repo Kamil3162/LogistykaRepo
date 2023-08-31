@@ -1,7 +1,6 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
+from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import CreateAPIView, DestroyAPIView
+from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt import authentication
 from rest_framework import permissions
 from .serializers import ReceivmentSerializer
@@ -10,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from ..UserManage.models import CustomUser
+from ..TruckManage.serializers import TruckSerializer
+from ..SemitruckManage.serializers import SemiTrailerSerializer
 from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
@@ -21,6 +22,37 @@ class ReceivmentModelViewSet(ModelViewSet):
     serializer_class = ReceivmentSerializer
     queryset = Receivment.objects.all()
 
+    @action(detail=True, methods=['POST'], name='Finish active receivment')
+    def finish_receivment(self, request, pk):
+        try:
+            '''
+                We wannna get vehicle and receivment instace details to
+                perform finish action on our receivment and change state 
+                in ours vehicles. Change State is crucial because we wanna
+                use these vehicles in next future receivments
+            '''
+            status_choices = SemiTrailer.CHOICES
+            data = {
+                'available': status_choices[1][0]
+            }
+
+            receivment_instance = Receivment.objects.get(pk=pk)
+            semi_trailer = receivment_instance.semi_trailer
+            truck = receivment_instance.truck
+
+            serializer = self.get_serializer(instance=receivment_instance)
+            serializer.finish_receivment(receivment_instance)
+            truck_serializer = TruckSerializer.update(instance=truck,
+                                                      validated_data=data)
+            semitrailer_serializer = SemiTrailerSerializer.update(
+                instance=semi_trailer, validated_data=data
+            )
+            return Response(data={'success': 'success'},
+                            status=status.HTTP_200_OK)
+        except Exception:
+            return Response(data={'success': 'success'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ReceivmentCreateView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication, )
@@ -31,9 +63,10 @@ class ReceivmentCreateView(CreateAPIView):
         try:
             state_busy = 'Zajety'
             manager_chose = ManagerSelect()
+
             data = request.data
             transferring_user = manager_chose.chose_random_manager()
-            sender = get_object_or_404(CustomUser, pk=data.get('sender'))
+            sender = get_object_or_404(CustomUser, pk=data.get('destination_user'))
 
             truck = get_object_or_404(Truck, pk=data.get('truck'))
 
@@ -43,14 +76,14 @@ class ReceivmentCreateView(CreateAPIView):
             information_response = dict()
             status_code = None
 
-            data['transferring_user'] = transferring_user.pk
-            data['sender'] = sender.pk
+            data['source_user'] = transferring_user.pk
+            data['destination_user'] = sender.pk
             data['truck'] = truck.pk
             data['semi_trailer'] = semi_trailer.pk
 
             # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(
-                status__exact=False, transferring_user=data['transferring_user']
+                status__exact=False, destination_user=data['destination_user']
             )
 
             if len(active_receivments) > 0:
@@ -61,9 +94,8 @@ class ReceivmentCreateView(CreateAPIView):
             if truck.is_available and semi_trailer.is_available:
                 serializer_receivment = self.get_serializer(data=data)
                 serializer_receivment.is_valid(raise_exception=True)
-
-                data['sender'] = sender
-                data['transferring_user'] = transferring_user
+                data['source_user'] = sender
+                data['destination_user'] = transferring_user
                 data['truck'] = truck
                 data['semi_trailer'] = semi_trailer
 
@@ -108,7 +140,6 @@ class ReceivmentCreateView(CreateAPIView):
         except Receivment.MultipleObjectsReturned as e:
             return Response(data={'error': str(e)},
                             status=status.HTTP_409_CONFLICT)
-
 
 
 
