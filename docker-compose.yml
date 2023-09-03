@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: logrep
+      MYSQL_USER: logistyka
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: logistykaroot
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST='%'
+      - DB_NAME=logrep
+      - DB_USER=logistyka
+      - DB_PASSWORD=password
+    depends_on:
+      - db
+
