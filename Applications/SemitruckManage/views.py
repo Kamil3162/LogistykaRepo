@@ -11,6 +11,7 @@ from rest_framework import status
 from .serializers import SemiTrailerSerializer, SemiTrailerEquipmentSerializer
 from .models import SemiTrailer, SemiTrailerEquipment
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 
 
 class SemiTruckViewSet(ModelViewSet):
@@ -92,8 +93,16 @@ class SemiTruckEquipmentCreate(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            semi_trailer_instance = get_object_or_404(
+                SemiTrailer,
+                pk=request.data['semi_trailer']
+            )
+            print(request.data)
+            request.data['semi_trailer'] = semi_trailer_instance.pk
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+
+            request.data['semi_trailer'] = semi_trailer_instance
             serializer.create(request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:

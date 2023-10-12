@@ -8,7 +8,7 @@ from django.db import IntegrityError
 class UserLoginSerializer(serializers.Serializer):
     class Meta:
         model = CustomUser
-        exclude = ['password','' ]
+        exclude = ['password', '']
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:

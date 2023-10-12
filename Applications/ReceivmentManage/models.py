@@ -30,7 +30,7 @@ class Receivment(models.Model):
     destination_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
                                          related_name='destination_user', default=1)
     source_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                               related_name='source_user', default=2)
+                                    related_name='source_user', default=2)
     status = models.CharField(
         choices=StatusChoices.choices,
         default=StatusChoices.IN_PROGESS,
@@ -59,3 +59,5 @@ class SemiTrailerReportPhoto(models.Model):
 
     def __str__(self):
         return f"SemiTrailerPhoto:{self.receivment.id}"
+
+

@@ -46,7 +46,7 @@ class TruckSerializer(serializers.ModelSerializer):
 class TruckEquipmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = TruckEquipment
-        fields = '__all__'
+        exclude = ('photo',)
 
     def create(self, validated_data):
         try:

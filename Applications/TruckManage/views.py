@@ -15,7 +15,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import action
 from .models import Truck, TruckEquipment
 from django.http import Http404
-
+from django.shortcuts import get_object_or_404
 # find . -path "*/__pycache__" -type d -exec rm -r {} ';'
 
 class TruckViewSet(ModelViewSet):
@@ -92,9 +92,14 @@ class TruckEquipmentCreateView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            data = request.data
-            serializer = self.get_serializer(data=data)
+            print(request.data)
+            truck = get_object_or_404(Truck, pk=request.data['truck'])
+            request.data['truck'] = truck.pk
+            print(request.data)
+            serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+            request.data['truck'] = truck
+            serializer.create(request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)},

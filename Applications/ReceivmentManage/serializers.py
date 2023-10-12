@@ -4,6 +4,40 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from .models import Receivment, SemiTrailerReportPhoto, TruckReportPhoto
 from ..UserManage.models import CustomUser
+from ..TruckManage.serializers import TruckSerializer
+from ..SemitruckManage.serializers import SemiTrailerSerializer
+
+class ReceivmentsSerializer(serializers.ModelSerializer):
+    source_user_name = serializers.CharField(source='source_user.first_name', read_only=True)
+    source_user_surname = serializers.CharField(source='source_user.last_name', read_only=True)
+    destination_user_name = serializers.CharField(source='destination_user.first_name', read_only=True)
+    destination_user_surname = serializers.CharField(source='destination_user.last_name', read_only=True)
+    truck_registration_number = serializers.CharField(source='truck.registration_number', read_only=True)
+    semitrailer_registration_numer = serializers.CharField(source='semi_trailer.registration_number', read_only=True)
+
+    class Meta:
+        model = Receivment
+        fields = [
+            'id',
+            'source_user_name',
+            'source_user_surname',
+            'destination_user_name',
+            'destination_user_surname',
+            'truck_registration_number',
+            'semitrailer_registration_numer',
+        ]
+
+class ReceivmentsSerializerDetail(serializers.ModelSerializer):
+
+    truck = TruckSerializer()
+    semi_trailer = SemiTrailerSerializer()
+    destination_user = CustomUser()
+    source_user = CustomUser()
+
+    class Meta:
+        model = Receivment
+        fields = '__all__'
+
 
 class ReceivmentSerializer(serializers.ModelSerializer):
     class Meta:

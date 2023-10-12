@@ -3,7 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt import authentication
 from rest_framework import permissions
-from .serializers import ReceivmentSerializer
+from .serializers import ReceivmentSerializer, ReceivmentsSerializer, ReceivmentsSerializerDetail
 from .models import Receivment
 from rest_framework.response import Response
 from rest_framework import status
@@ -19,8 +19,13 @@ from rest_framework.exceptions import ValidationError
 class ReceivmentModelViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication,)
-    serializer_class = ReceivmentSerializer
-    queryset = Receivment.objects.all()
+    serializer_class = ReceivmentsSerializerDetail
+    queryset = Receivment.objects.select_related(
+        'destination_user',
+        'source_user',
+        'semi_trailer',
+        'truck'
+    )
 
     @action(detail=True, methods=['POST'], name='Finish active receivment')
     def finish_receivment(self, request, pk):
