@@ -6,6 +6,17 @@ from ..UserManage.models import CustomUser
 from ..SemitruckManage.models import SemiTrailer
 from django.utils.translation import gettext_lazy as _
 from enum import Enum
+
+class ReceivmentLocations(models.Model):
+    city = models.CharField(max_length=30)
+    street = models.CharField(max_length=40, blank=True)
+    apartment_number = models.CharField(max_length=6, blank=True)
+    geo_address = models.CharField(max_length=30, blank=True)
+    data_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id)
+
 class Receivment(models.Model):
     class StatusChoices(models.TextChoices):
         ACCIDENT = 'Accident', _('Accident')
@@ -42,6 +53,12 @@ class Receivment(models.Model):
                                        max_length=12)
     truck_complain = models.CharField(max_length=300, blank=True)
     semi_trailer_complain = models.CharField(max_length=300, blank=True)
+    destination = models.ForeignKey(
+        ReceivmentLocations,
+        on_delete=models.CASCADE,
+        blank=True,
+        default=None
+    )
 
     def __str__(self):
         return f'RecevimentID:{self.id}'
@@ -60,4 +77,8 @@ class SemiTrailerReportPhoto(models.Model):
     def __str__(self):
         return f"SemiTrailerPhoto:{self.receivment.id}"
 
+class LocationHistory(models.Model):
+    receivment = models.ForeignKey(Receivment, on_delete=models.CASCADE)
+    location = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
 

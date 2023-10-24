@@ -3,8 +3,10 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework_simplejwt import authentication
 from rest_framework import permissions
-from .serializers import ReceivmentSerializer, ReceivmentsSerializer, ReceivmentsSerializerDetail
-from .models import Receivment
+from .serializers import ReceivmentSerializer, \
+    ReceivmentsSerializer, \
+    ReceivmentsSerializerDetail
+from .models import Receivment, ReceivmentLocations, LocationHistory
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -15,11 +17,15 @@ from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
+class CustomPagination(PageNumberPagination):
+    page_size = 5
 
 class ReceivmentModelViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication,)
     serializer_class = ReceivmentsSerializerDetail
+    pagination_class = CustomPagination
     queryset = Receivment.objects.select_related(
         'destination_user',
         'source_user',
@@ -57,6 +63,10 @@ class ReceivmentModelViewSet(ModelViewSet):
         except Exception:
             return Response(data={'success': 'success'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # def list(self, request, *args, **kwargs):
+    #     return super().list(request, *args, **kwargs)
+
 
 class ReceivmentCreateView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -146,7 +156,13 @@ class ReceivmentCreateView(CreateAPIView):
             return Response(data={'error': str(e)},
                             status=status.HTTP_409_CONFLICT)
 
+class CreateLocationApiView(CreateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.JWTAuthentication,)
+    serializer_class = ReceivmentSerializer
 
 
+class UpdateLocationApiView(RetrieveUpdateDestroyAPIView):
+    pass
 
 

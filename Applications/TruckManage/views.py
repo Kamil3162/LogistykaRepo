@@ -16,7 +16,12 @@ from rest_framework.decorators import action
 from .models import Truck, TruckEquipment
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
+
 # find . -path "*/__pycache__" -type d -exec rm -r {} ';'
+
+class PaginationClass(PageNumberPagination):
+    page_size = 3
 
 class TruckViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated, )
@@ -24,6 +29,7 @@ class TruckViewSet(ModelViewSet):
     parser_classes = (MultiPartParser, )
     serializer_class = TruckSerializer
     queryset = Truck.objects.all()
+    pagination_class = PaginationClass
     lookup_url_kwarg = 'pk'
 
     def get_object(self):
@@ -36,7 +42,11 @@ class TruckViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         try:
-            trucks = self.get_queryset()
+            trucks = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(trucks)
+            if page is not None:
+                trucks_serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(trucks_serializer.data)
             serializer = self.get_serializer(instance=trucks, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:

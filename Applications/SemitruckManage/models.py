@@ -70,4 +70,4 @@ class SemiTrailerEquipment(models.Model):
     dimenstion_board = models.BooleanField(default=True, blank=False)
 
     def __str__(self):
-        return self.semi_trailer.id
+        return str(self.semi_trailer.id)

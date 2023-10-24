@@ -2,10 +2,20 @@ import datetime
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Receivment, SemiTrailerReportPhoto, TruckReportPhoto
+
+from .models import (
+    Receivment,
+    SemiTrailerReportPhoto,
+    TruckReportPhoto,
+    ReceivmentLocations,
+    LocationHistory
+)
+
 from ..UserManage.models import CustomUser
+from ..UserManage.serializers import UserSerializer
 from ..TruckManage.serializers import TruckSerializer
 from ..SemitruckManage.serializers import SemiTrailerSerializer
+from django.db import IntegrityError
 
 class ReceivmentsSerializer(serializers.ModelSerializer):
     source_user_name = serializers.CharField(source='source_user.first_name', read_only=True)
@@ -31,8 +41,8 @@ class ReceivmentsSerializerDetail(serializers.ModelSerializer):
 
     truck = TruckSerializer()
     semi_trailer = SemiTrailerSerializer()
-    destination_user = CustomUser()
-    source_user = CustomUser()
+    destination_user = UserSerializer()
+    source_user = UserSerializer()
 
     class Meta:
         model = Receivment
@@ -42,7 +52,6 @@ class ReceivmentsSerializerDetail(serializers.ModelSerializer):
 class ReceivmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Receivment
-        fields = '__all__'
 
     def create(self, validated_data):
         try:
@@ -53,6 +62,7 @@ class ReceivmentSerializer(serializers.ModelSerializer):
                 source_user=validated_data.get('source_user'),
                 truck=validated_data.get('truck'),
                 semi_trailer=validated_data.get('semi_trailer'),
+                destination=validated_data.get('destination')
             )
             return receivment
         except Exception as e:
@@ -104,3 +114,46 @@ class SemiTrailerReportPhotoSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise Exception(str(e))
 
+
+class FinalLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReceivmentLocations
+        fields = '__all__'
+
+    def create(self, validated_data):
+        try:
+            final_location = ReceivmentLocations.objects.create(
+                **validated_data
+            )
+        except IntegrityError as e:
+            raise IntegrityError("Record exists in db")
+        except ValidationError as e:
+            raise ValidationError(
+                "Serializer raise following errors:{}".format(str(e))
+            )
+        except Exception as e:
+            raise e
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.keys():
+            setattr(instance, key, value)
+        instance.save()
+
+class LocationHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LocationHistory
+        fields = ('__all__',)
+
+    def create(self, validated_data):
+        try:
+            location_history = LocationHistory.objects.create(**validated_data)
+        except Exception as e:
+            raise Exception(str(e))
+
+    def update(self, instance, validated_data):
+        for key, value in validated_data.keys():
+            setattr(instance, key, value)
+        instance.save()
+
+    def __delete__(self, instance):
+        pass
