@@ -47,6 +47,10 @@ urlpatterns = [
     path('receivment-create/',
          receivment_views.ReceivmentCreateView.as_view(),
          name='receivments'),
+    path('active-receivment/',
+         receivment_views.ActiveUserReceivment.as_view(),
+         name='active-receivment'
+         ),
     # path('semitrailer-all/',
     #      semitrailer_views.SemiTrailerList.as_view(),
     #      name='semitrailer-list'),

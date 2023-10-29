@@ -41,7 +41,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'email', 'phone_number', 'own_car', 'groups', 'is_staff')
+        fields = (
+            'first_name',
+            'last_name',
+            'email',
+            'phone_number',
+            'own_car',
+            'groups',
+            'is_staff',
+            'pk'
+        )
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password')

@@ -5,10 +5,14 @@ from rest_framework_simplejwt import authentication
 from rest_framework import permissions
 from .serializers import ReceivmentSerializer, \
     ReceivmentsSerializer, \
-    ReceivmentsSerializerDetail
-from .models import Receivment, ReceivmentLocations, LocationHistory
+    ReceivmentsSerializerDetail, \
+    LocationHistorySerializer
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ..UserManage.models import CustomUser
 from ..TruckManage.serializers import TruckSerializer
@@ -16,8 +20,9 @@ from ..SemitruckManage.serializers import SemiTrailerSerializer
 from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
-from rest_framework.exceptions import ValidationError
-from rest_framework.pagination import PageNumberPagination
+from .models import Receivment, ReceivmentLocations, LocationHistory
+
+
 class CustomPagination(PageNumberPagination):
     page_size = 5
 
@@ -76,6 +81,10 @@ class ReceivmentCreateView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            '''
+                Sender is a driver those wanna create new receivment
+                Transferring user is a manager which rent a car
+            '''
             state_busy = 'Zajety'
             manager_chose = ManagerSelect()
 
@@ -91,10 +100,18 @@ class ReceivmentCreateView(CreateAPIView):
             information_response = dict()
             status_code = None
 
+
+            # we need to make an random check of distance
+            # we return instance of receivment with all data
+            driver_location = Receivment.driver_manager.get_latest_driver_location(
+                driver=sender
+            ).destination
+
             data['source_user'] = transferring_user.pk
             data['destination_user'] = sender.pk
             data['truck'] = truck.pk
             data['semi_trailer'] = semi_trailer.pk
+            data['destination'] = driver_location.pk
 
             # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(
@@ -107,8 +124,22 @@ class ReceivmentCreateView(CreateAPIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             if truck.is_available and semi_trailer.is_available:
+
                 serializer_receivment = self.get_serializer(data=data)
                 serializer_receivment.is_valid(raise_exception=True)
+
+                data = {
+                    'city': driver_location.city,
+                    'stree': driver_location.street,
+                    'apartment_number': driver_location.apartment_number
+                }
+
+                location_history_serializer = LocationHistorySerializer(
+                    data=data
+                )
+                location_history_serializer.is_valid(raise_exception=True)
+                location_history_serializer.create(data)
+
                 data['source_user'] = sender
                 data['destination_user'] = transferring_user
                 data['truck'] = truck
@@ -116,6 +147,7 @@ class ReceivmentCreateView(CreateAPIView):
 
                 serializer_receivment.create(data)
 
+                # code responsible for update state of machines to busy
                 truck.update_state(state_busy)
                 semi_trailer.update_state(state_busy)
 
@@ -124,7 +156,7 @@ class ReceivmentCreateView(CreateAPIView):
             else:
                 status_code = status.HTTP_409_CONFLICT
                 information_response['error'] = 'Check user status,\
-                 truck, semitrailer'
+                 truck, semitrailer and format location'
 
             return Response(data=information_response, status=status_code)
         except Exception as e:
@@ -155,6 +187,39 @@ class ReceivmentCreateView(CreateAPIView):
         except Receivment.MultipleObjectsReturned as e:
             return Response(data={'error': str(e)},
                             status=status.HTTP_409_CONFLICT)
+
+class ActiveUserReceivment(RetrieveUpdateAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.JWTAuthentication,)
+    serializer_class = ReceivmentSerializer
+    queryset = Receivment.objects.all()
+
+    def get_object(self):
+        try:
+            user = self.request.user    # this instace to make an filter
+            receivment_statuses = Receivment.get_statuses()
+            receivment = self.get_queryset().get(
+                destination_user=user,
+                status=receivment_statuses.IN_PROGESS
+            )
+            return receivment
+        except Receivment.DoesNotExist:
+            print("Using following data i cant find similar or exact object")
+        except Receivment.MultipleObjectsReturned:
+            print("Query return more than two objects")
+        except Exception as e:
+            print(str(e))
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            receivment_object = self.get_object()
+            serializer = self.get_serializer(instance=receivment_object)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error':str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+             )
 
 class CreateLocationApiView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)

@@ -161,7 +161,6 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
             if serializer.is_valid():
                 mod_user = serializer.update(modified_user, data)
                 mod_user.save()
-                # data={'success': 'naura'}
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
         except Exception as e:
@@ -200,7 +199,7 @@ class RegisterUserView(CreateAPIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_serializer_class(self):
         ser_class = super().get_serializer_class()

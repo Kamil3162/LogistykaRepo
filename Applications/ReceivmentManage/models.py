@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import models
+from .managers.custom_managers import ReceivmentManager
 from ..TruckManage.models import Truck
 from ..UserManage.models import CustomUser
 from ..SemitruckManage.models import SemiTrailer
@@ -17,19 +18,22 @@ class ReceivmentLocations(models.Model):
     def __str__(self):
         return str(self.id)
 
+    def concatination_address(self):
+        return str(f"{self.city},{self.street} {self.apartment_number}")
+
 class Receivment(models.Model):
     class StatusChoices(models.TextChoices):
-        ACCIDENT = 'Accident', _('Accident')
-        IN_PROGESS = 'Proggres', _('In progess')
-        FINISHED = 'Finish', _('Finished')
+        ACCIDENT = 'Accident'
+        IN_PROGESS = 'Proggres'
+        FINISHED = 'Finish'
 
         # @classmethod
         # def choices(cls):
         #     return [(item.value, item.value) for item in cls]
 
     class ReceivmentType(models.TextChoices):
-        DRIVER = 'from_driver', _('From Driver to Manager')
-        MANAGER = 'from_manager', _('From manager to Driver')
+        DRIVER = 'from_driver'
+        MANAGER = 'from_manager'
 
         # @classmethod
         # def choices(cls):
@@ -60,8 +64,20 @@ class Receivment(models.Model):
         default=None
     )
 
+    objects = models.Manager()
+    driver_manager = ReceivmentManager()
+
     def __str__(self):
         return f'RecevimentID:{self.id}'
+
+    @classmethod
+    def get_statuses(cls):
+        return cls.StatusChoices
+
+    @classmethod
+    def get_receivment_types(cls):
+        return cls.ReceivmentType
+
 
 class TruckReportPhoto(models.Model):
     receivment = models.ForeignKey(Receivment, on_delete=models.CASCADE)

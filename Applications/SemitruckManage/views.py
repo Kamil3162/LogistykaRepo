@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 
 class PaginationClass(PageNumberPagination):
-    page_size = 3
+    page_size = 5
 
 class SemiTruckViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
@@ -27,6 +27,7 @@ class SemiTruckViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         try:
+            print(request.user)
             semi_trailers = self.get_queryset()
             page = self.paginate_queryset(semi_trailers)
             if page is not None:
