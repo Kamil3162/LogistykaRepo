@@ -19,7 +19,7 @@ class ReceivmentLocations(models.Model):
         return str(self.id)
 
     def concatination_address(self):
-        return str(f"{self.city},{self.street} {self.apartment_number}")
+        return str(f"{self.city}, {self.street} {self.apartment_number}")
 
 class Receivment(models.Model):
     class StatusChoices(models.TextChoices):

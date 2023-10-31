@@ -2,19 +2,22 @@ import datetime
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
+from django.core.exceptions import ObjectDoesNotExist
 from .models import (
     Receivment,
     SemiTrailerReportPhoto,
     TruckReportPhoto,
     ReceivmentLocations,
-    LocationHistory
+    LocationHistory,
+
 )
 
 from ..UserManage.models import CustomUser
 from ..UserManage.serializers import UserSerializer
 from ..TruckManage.serializers import TruckSerializer
+from ..TruckManage.models import Truck
 from ..SemitruckManage.serializers import SemiTrailerSerializer
+from ..SemitruckManage.models import SemiTrailer
 from django.db import IntegrityError
 
 
@@ -45,11 +48,12 @@ class FinalLocationSerializer(serializers.ModelSerializer):
 class LocationHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationHistory
-        fields = ('__all__',)
+        fields = '__all__'
 
     def create(self, validated_data):
         try:
             location_history = LocationHistory.objects.create(**validated_data)
+            return location_history
         except Exception as e:
             raise Exception(str(e))
 
@@ -96,11 +100,26 @@ class ReceivmentsSerializerDetail(serializers.ModelSerializer):
 
 
 class ReceivmentSerializer(serializers.ModelSerializer):
-    destination = FinalLocationSerializer()
+    # add field destination like serializer instance in another serializer
 
     class Meta:
         model = Receivment
         fields = '__all__'
+
+    # def validate(self, data):
+    #     print('validate function')
+    #     data['destination_user'] = self.validate_and_get_object(CustomUser, data.get('destination_user'))
+    #     data['source_user'] = self.validate_and_get_object(CustomUser, data.get('source_user'))
+    #     data['truck'] = self.validate_and_get_object(Truck, data.get('truck'))
+    #     data['semi_trailer'] = self.validate_and_get_object(SemiTrailer, data.get('semi_trailer'))
+    #     data['destination'] = self.validate_and_get_object(ReceivmentLocations, data.get('destination'))
+    #     return data
+    #
+    # def validate_and_get_object(self, model, pk):
+    #     try:
+    #         return model.objects.get(pk=pk)
+    #     except ObjectDoesNotExist:
+    #         raise serializers.ValidationError(f"{model.__name__} with id {pk} does not exist.")
 
     def create(self, validated_data):
         try:

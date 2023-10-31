@@ -49,6 +49,10 @@ class SemiTrailer(models.Model):
         except KeyError:
             raise KeyError("Invalid key data")
 
+    @classmethod
+    def get_choices(cls):
+        return cls.CHOICES
+
 class SemiTrailerEquipment(models.Model):
     semi_trailer = models.OneToOneField(SemiTrailer,
                                         on_delete=models.CASCADE,

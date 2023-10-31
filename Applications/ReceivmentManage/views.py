@@ -85,9 +85,8 @@ class ReceivmentCreateView(CreateAPIView):
                 Sender is a driver those wanna create new receivment
                 Transferring user is a manager which rent a car
             '''
-            state_busy = 'Zajety'
+            state_busy = SemiTrailer.get_choices()[1][1]
             manager_chose = ManagerSelect()
-
             data = request.data
             transferring_user = manager_chose.chose_random_manager()
             sender = get_object_or_404(CustomUser, pk=data.get('destination_user'))
@@ -100,18 +99,23 @@ class ReceivmentCreateView(CreateAPIView):
             information_response = dict()
             status_code = None
 
-
-            # we need to make an random check of distance
             # we return instance of receivment with all data
             driver_location = Receivment.driver_manager.get_latest_driver_location(
                 driver=sender
             ).destination
 
+            literal_driver_location = driver_location.concatination_address()
+
+            # receivment location to drive
+            target_location = Receivment.driver_manager.pick_receivment(
+                literal_driver_location
+            )
+
             data['source_user'] = transferring_user.pk
             data['destination_user'] = sender.pk
             data['truck'] = truck.pk
             data['semi_trailer'] = semi_trailer.pk
-            data['destination'] = driver_location.pk
+            data['destination'] = target_location.pk
 
             # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(
@@ -124,28 +128,35 @@ class ReceivmentCreateView(CreateAPIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             if truck.is_available and semi_trailer.is_available:
-
                 serializer_receivment = self.get_serializer(data=data)
                 serializer_receivment.is_valid(raise_exception=True)
 
-                data = {
-                    'city': driver_location.city,
-                    'stree': driver_location.street,
-                    'apartment_number': driver_location.apartment_number
+                data_location = {
+                    'city': target_location.city,
+                    'street': target_location.street,
+                    'apartment_number': target_location.apartment_number
                 }
-
-                location_history_serializer = LocationHistorySerializer(
-                    data=data
-                )
-                location_history_serializer.is_valid(raise_exception=True)
-                location_history_serializer.create(data)
 
                 data['source_user'] = sender
                 data['destination_user'] = transferring_user
                 data['truck'] = truck
                 data['semi_trailer'] = semi_trailer
+                data['destination'] = target_location
 
-                serializer_receivment.create(data)
+                receivment = serializer_receivment.create(data)
+
+                location_history_data = {
+                    'receivment': receivment.pk,
+                    'location': f'{data_location.get("city")} \
+                    {data_location.get("street")} \
+                    {data_location.get("apartment_number")}'
+                }
+
+                location_history_serializer = LocationHistorySerializer(
+                    data=location_history_data)
+                location_history_serializer.is_valid(raise_exception=True)
+                location_history_data['receivment'] = receivment
+                location_history_serializer.create(location_history_data)
 
                 # code responsible for update state of machines to busy
                 truck.update_state(state_busy)
@@ -160,6 +171,9 @@ class ReceivmentCreateView(CreateAPIView):
 
             return Response(data=information_response, status=status_code)
         except Exception as e:
+            return Response(data={'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except KeyError as e:
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
