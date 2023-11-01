@@ -140,6 +140,7 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         try:
+            print('Esa testowanie wyswietlania')
             user_instance = request.user
             print(user_instance.show_permissions())
             print(user_instance.has_perm('is_active'))
@@ -171,8 +172,10 @@ class UserPermissionView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (JWTAuthentication, )
 
+
     def get(self, request):
         try:
+            print('esa')
             user = request.user
             serializer = UserPermissionSerializer(instance=user)
             return Response(serializer.data, status=status.HTTP_200_OK)

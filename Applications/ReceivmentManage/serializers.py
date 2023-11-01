@@ -9,7 +9,6 @@ from .models import (
     TruckReportPhoto,
     ReceivmentLocations,
     LocationHistory,
-
 )
 
 from ..UserManage.models import CustomUser
