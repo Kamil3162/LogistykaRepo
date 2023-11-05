@@ -296,12 +296,13 @@ class HandeLocationHistoryApiView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             user = self.request.user
-            data = request.data
             receivment = Receivment.driver_manager.get_active_receivement(user)
-            print(receivment)
+            data = request.data
+            data['receivment'] = receivment.pk
             if receivment is not None:
                 serializer = LocationHistorySerializer(data=data)
                 serializer.is_valid(raise_exception=True)
+                data['receivment'] = receivment
                 serializer.create(data)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response({'error': 'lack of active receivments'},

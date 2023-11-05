@@ -88,11 +88,8 @@ class ReceivmentManager(models.Manager):
         try:
             Receivment = apps.get_model('ReceivmentManage', 'Receivment')
             statuses = Receivment.get_statuses()
-            print(user)
-            print(statuses.IN_PROGESS)
-            print(self.get_queryset().all())
             return self.get_queryset().get(
-                models.Q(status=self.statutes.IN_PROGESS) &
+                models.Q(status=statuses.IN_PROGESS) &
                 models.Q(destination_user=user)
             )
         except KeyError as e:
