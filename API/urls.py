@@ -51,6 +51,14 @@ urlpatterns = [
          receivment_views.ActiveUserReceivment.as_view(),
          name='active-receivment'
          ),
+    path('create-location/',
+         receivment_views.CreateLocationApiView.as_view(),
+         name='create-location'
+         ),
+    path('location-history/',
+         receivment_views.HandeLocationHistoryApiView.as_view(),
+         name='create-location'
+         ),
     # path('semitrailer-all/',
     #      semitrailer_views.SemiTrailerList.as_view(),
     #      name='semitrailer-list'),

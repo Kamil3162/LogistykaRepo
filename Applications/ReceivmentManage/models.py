@@ -14,6 +14,7 @@ class ReceivmentLocations(models.Model):
     apartment_number = models.CharField(max_length=6, blank=True)
     geo_address = models.CharField(max_length=30, blank=True)
     data_created = models.DateTimeField(auto_now_add=True)
+    final_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return str(self.id)

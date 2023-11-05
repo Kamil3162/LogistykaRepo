@@ -1,5 +1,6 @@
 from django.db import models
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 import os
 import googlemaps
 
@@ -16,15 +17,17 @@ class ReceivmentManager(models.Manager):
         self.closest_distance = None
         self.closest_object = None
         self.latest_distance = None
+        self.statutes = None
 
     def get_queryset(self):
         return models.QuerySet(self.model, using=self._db)
 
+
     def get_latest_driver_location(self, driver):
         Receivment = apps.get_model('ReceivmentManage', 'Receivment')
-        receivment_statuses = Receivment.get_statuses()
+        self.statutes = Receivment.get_statuses()
         result = self.get_queryset().filter(
-            models.Q(status=receivment_statuses.FINISHED) &
+            models.Q(status=self.statutes.FINISHED) &
             models.Q(destination_user=driver)
         ).order_by('date_finished').last()
         return result
@@ -35,7 +38,7 @@ class ReceivmentManager(models.Manager):
                 :param destination_address: The destination address.
                 :return: A tuple of (distance, duration).
                 """
-        destination_list = self.search_receivment_to_realize()
+        destination_list = self.get_receivment_to_realize()
         for address, recievment_object in destination_list.items():
             destination_matrix = self.GOOGLE_CLIENT.distance_matrix(
                 source_address, address
@@ -58,7 +61,7 @@ class ReceivmentManager(models.Manager):
 
         return self.closest_object
 
-    def search_receivment_to_realize(self):
+    def get_receivment_to_realize(self):
         """
             Function search all possible destination to realize
         :return: dict{'city, street apartment_number':object,}
@@ -68,12 +71,33 @@ class ReceivmentManager(models.Manager):
         active_literal_locations = {
             x.concatination_address(): x for x in active_locations
         }
-        print(active_literal_locations)
         return active_literal_locations
 
-    def search_active_drivers(self):
+    def get_active_drivers(self):
         Receivment = apps.get_model('ReceivmentManage', 'Receivment')
         active_locations = Receivment.objects.filter(
             models.Q(status='Finished') & ~models.Q(receivment__type='Proggres')
         ).distinct()
         return active_locations
+
+    def get_active_receivement(self, user):
+        """
+            This method returns a queryset of all active receivements.
+            An active receivement is defined as one that has a status of 'IN_PROGESS'.
+        """
+        try:
+            Receivment = apps.get_model('ReceivmentManage', 'Receivment')
+            statuses = Receivment.get_statuses()
+            print(user)
+            print(statuses.IN_PROGESS)
+            print(self.get_queryset().all())
+            return self.get_queryset().get(
+                models.Q(status=self.statutes.IN_PROGESS) &
+                models.Q(destination_user=user)
+            )
+        except KeyError as e:
+            raise KeyError(str(e))
+        except ObjectDoesNotExist as e:
+            raise ObjectDoesNotExist(str(e))
+
+

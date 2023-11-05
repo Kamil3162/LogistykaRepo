@@ -1,7 +1,6 @@
 import json
 from django.shortcuts import render
 from rest_framework.views import APIView
-
 from rest_framework.generics import (
     ListAPIView,
     CreateAPIView,
@@ -10,13 +9,11 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     RetrieveUpdateAPIView
 )
-
 from rest_framework import (
     permissions,
     status,
     authentication
 )
-
 from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
@@ -221,3 +218,9 @@ class RegisterUserView(CreateAPIView):
     #     print("this is default response header")
     #     print(context)
 
+class DeleteAccount(DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication, )
+
+    def delete(self, request, *args, **kwargs):
+        pass

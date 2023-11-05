@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     'Applications.TruckManage',
     'Applications.UserManage',
     'Applications.MailBox',
-    'Applications.Chat'
+    'Applications.Chat',
 ]
 
 MIDDLEWARE = [

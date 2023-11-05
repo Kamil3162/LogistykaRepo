@@ -1,12 +1,13 @@
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import CreateAPIView
+from rest_framework.views import APIView
 from rest_framework_simplejwt import authentication
 from rest_framework import permissions
 from .serializers import ReceivmentSerializer, \
     ReceivmentsSerializer, \
     ReceivmentsSerializerDetail, \
-    LocationHistorySerializer
+    LocationHistorySerializer, FinalLocationSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import RetrieveUpdateAPIView
@@ -21,7 +22,7 @@ from ..TruckManage.models import Truck
 from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from .models import Receivment, ReceivmentLocations, LocationHistory
-
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 class CustomPagination(PageNumberPagination):
     page_size = 5
@@ -238,10 +239,82 @@ class ActiveUserReceivment(RetrieveUpdateAPIView):
 class CreateLocationApiView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication,)
-    serializer_class = ReceivmentSerializer
+    serializer_class = FinalLocationSerializer
 
+    def create(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.create(data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:  # Catch validation errors specifically
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'detail': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class UpdateLocationApiView(RetrieveUpdateDestroyAPIView):
-    pass
+class HandeLocationHistoryApiView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (authentication.JWTAuthentication,)
 
+    def get_queryset(self):
+        """
+            This function should return two instance from LocationHistory
+            So we havbe two option - we have two instance one or 0
+        """
+        user = self.request.user
+        active_user_receivment = Receivment.driver_manager.get_active_receivement(user)
+        return LocationHistory.objects.filter(receivment=active_user_receivment).order_by('created_at')    # this could return more than one instance
 
+    def put(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            last_locations = self.get_queryset()
+            if last_locations.exists():
+                return Response(
+                    {'error': 'No existing location found to update.'},
+                    status=status.HTTP_404_NOT_FOUND)
+            elif len(last_locations) > 1:
+                last_location = last_locations.last()
+                serializer = LocationHistorySerializer(
+                    data=data,
+                    instance=last_location
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data,
+                                status=status.HTTP_202_ACCEPTED)
+            return Response({'error': 'improper amount of instances'},
+                            status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            user = self.request.user
+            data = request.data
+            receivment = Receivment.driver_manager.get_active_receivement(user)
+            print(receivment)
+            if receivment is not None:
+                serializer = LocationHistorySerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.create(data)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'error': 'lack of active receivments'},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            locations_history = self.get_queryset()
+            serializer = LocationHistorySerializer(locations_history, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)},
+                            status.HTTP_500_INTERNAL_SERVER_ERROR)
