@@ -23,6 +23,7 @@ from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from .models import Receivment, ReceivmentLocations, LocationHistory
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.utils import timezone
 
 class CustomPagination(PageNumberPagination):
     page_size = 5
@@ -206,17 +207,14 @@ class ReceivmentCreateView(CreateAPIView):
 class ActiveUserReceivment(RetrieveUpdateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication,)
-    serializer_class = ReceivmentSerializer
+    serializer_class = ReceivmentsSerializerDetail
     queryset = Receivment.objects.all()
 
+    # also i should return location and data aobut vehickles
     def get_object(self):
         try:
             user = self.request.user    # this instace to make an filter
-            receivment_statuses = Receivment.get_statuses()
-            receivment = self.get_queryset().get(
-                destination_user=user,
-                status=receivment_statuses.IN_PROGESS
-            )
+            receivment = Receivment.driver_manager.get_active_receivement(user)
             return receivment
         except Receivment.DoesNotExist:
             print("Using following data i cant find similar or exact object")
@@ -265,36 +263,51 @@ class HandeLocationHistoryApiView(APIView):
         """
         user = self.request.user
         active_user_receivment = Receivment.driver_manager.get_active_receivement(user)
-        return LocationHistory.objects.filter(receivment=active_user_receivment).order_by('created_at')    # this could return more than one instance
+        queryset = LocationHistory.objects.filter(
+            receivment=active_user_receivment
+        ).order_by('updated_at')
+        return active_user_receivment, queryset
 
     def put(self, request, *args, **kwargs):
         try:
+            user = request.user
             data = request.data
-            last_locations = self.get_queryset()
-            if last_locations.exists():
+            active_receivment, last_locations = self.get_queryset()
+
+            if last_locations.count() < 2:
+                return Response({'error': 'we have to create new instance using post method'},
+                                status=status.HTTP_404_NOT_FOUND)
+            else:
+                data['receivment'] = active_receivment.pk
+                data['updated_at'] = timezone.now()
+
+                # Get the last location if it exists
+                last_location = last_locations.first()
+
+                if last_location is not None:
+                    # Prepare the serializer with the instance and data
+                    serializer = LocationHistorySerializer(
+                        instance=last_location,
+                        data=data,
+                        partial=True
+                    )
+                    # Validate the data
+                    serializer.is_valid(raise_exception=True)
+                    # Save the instance (update)
+                    serializer.save()
+                    return Response(serializer.data,
+                                    status=status.HTTP_202_ACCEPTED)
+                # Handle the case where there is no last location
                 return Response(
                     {'error': 'No existing location found to update.'},
                     status=status.HTTP_404_NOT_FOUND)
-            elif len(last_locations) > 1:
-                last_location = last_locations.last()
-                serializer = LocationHistorySerializer(
-                    data=data,
-                    instance=last_location
-                )
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-                return Response(serializer.data,
-                                status=status.HTTP_202_ACCEPTED)
-            return Response({'error': 'improper amount of instances'},
-                            status=status.HTTP_404_NOT_FOUND)
-        except ValidationError as e:
-            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request, *args, **kwargs):
         try:
+            print("sukces")
             user = self.request.user
             receivment = Receivment.driver_manager.get_active_receivement(user)
             data = request.data
@@ -304,6 +317,7 @@ class HandeLocationHistoryApiView(APIView):
                 serializer.is_valid(raise_exception=True)
                 data['receivment'] = receivment
                 serializer.create(data)
+                print("sukces")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response({'error': 'lack of active receivments'},
                             status=status.HTTP_404_NOT_FOUND)

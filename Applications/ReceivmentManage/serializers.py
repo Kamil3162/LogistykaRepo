@@ -57,13 +57,13 @@ class LocationHistorySerializer(serializers.ModelSerializer):
             raise Exception(str(e))
 
     def update(self, instance, validated_data):
-        for key, value in validated_data.keys():
+        for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
+        return instance
 
     def __delete__(self, instance):
         pass
-
 
 class ReceivmentsSerializer(serializers.ModelSerializer):
     source_user_name = serializers.CharField(source='source_user.first_name', read_only=True)

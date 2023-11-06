@@ -98,4 +98,5 @@ class LocationHistory(models.Model):
     receivment = models.ForeignKey(Receivment, on_delete=models.CASCADE)
     location = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
 
