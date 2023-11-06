@@ -75,3 +75,7 @@ class CustomUserManager(BaseUserManager):
         user.is_admin = True
 
         return user
+
+    def delete_user(self, user_id):
+        user = self.get(pk=user_id)
+        return

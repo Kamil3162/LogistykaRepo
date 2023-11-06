@@ -7,6 +7,8 @@ from .validators import (
     street_name_validator,
     zip_code_validator
 )
+# from .management.user_manager import CustomUserManager
+from ..ReceivmentManage.models import Receivment
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     AVAILABLE_CHOICES = (
         ('Dostepny', 'Dostepny'),
@@ -61,6 +63,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+
     class Meta:
         permissions = [
             ('view_user_details', 'Can view user details'),
@@ -93,3 +96,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def all_fields(self):
         return self.clean_fields()
 
+    def can_be_deleted(self, receivments):
+        finish_status = Receivment.get_statuses().FINISHED
+        return all(receivment.status == finish_status for receivment in receivments)
