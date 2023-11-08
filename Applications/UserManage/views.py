@@ -223,25 +223,25 @@ class DeleteAccount(DestroyAPIView):
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (JWTAuthentication, )
 
-    # if we finished out receivment you cant delete account
-    # we have to set semitrailer status to free
-    # we have to set truck status to free
-    # if we will have this all element we can delete account
-
     def get_queryset(self):
         user = self.request.user
         return Receivment.objects.filter(destination_user=user)
 
     def delete(self, request, *args, **kwargs):
         try:
-            user = request.user
-            finish_status = Receivment.get_statuses().FINISHED
-            receivments = self.get_queryset()
-            all_finished = all(receivment.status == finish_status for receivment in receivments)
-            if all_finished:
-                user.objects.delete_user()
-                return Response({'success': 'sukces'},
-                                status=status.HTTP_200_OK)
+            print(request.data.get('refresh_token'))
+            # user = request.user
+            # finish_status = Receivment.get_statuses().FINISHED
+            # receivments = self.get_queryset()
+            # print(receivments)
+            # delete_status = user.can_be_deleted(finish_status, receivments)
+            # if delete_status:
+            #     CustomUser.objects.delete_user(user.pk)
+            #     return Response({'success': 'sukces'},
+            #                     status=status.HTTP_200_OK)
+            return Response({'error': 'you cant delete your account ,'
+                                      'you have active receivments'},
+                            status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
             return Response({'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

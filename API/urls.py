@@ -59,6 +59,10 @@ urlpatterns = [
          receivment_views.HandeLocationHistoryApiView.as_view(),
          name='create-location'
          ),
+    path('delete-account/',
+         user_views.DeleteAccount.as_view(),
+         name='create-location'
+         ),
     # path('semitrailer-all/',
     #      semitrailer_views.SemiTrailerList.as_view(),
     #      name='semitrailer-list'),

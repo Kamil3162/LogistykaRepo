@@ -8,7 +8,8 @@ from .validators import (
     zip_code_validator
 )
 # from .management.user_manager import CustomUserManager
-from ..ReceivmentManage.models import Receivment
+from django.apps import apps
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     AVAILABLE_CHOICES = (
         ('Dostepny', 'Dostepny'),
@@ -96,6 +97,5 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def all_fields(self):
         return self.clean_fields()
 
-    def can_be_deleted(self, receivments):
-        finish_status = Receivment.get_statuses().FINISHED
-        return all(receivment.status == finish_status for receivment in receivments)
+    def can_be_deleted(self, receiment_status, receivments):
+        return all(receivment.status == receiment_status for receivment in receivments)
