@@ -11,11 +11,14 @@ class Messages(models.Model):
     converstation = models.ForeignKey(Conversations,
                                       on_delete=models.CASCADE)
     content = models.CharField(max_length=300)
+    data_created = models.DateTimeField(auto_now_add=True, null=True)
 
 class Participant(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     conversation = models.ForeignKey(Conversations, on_delete=models.CASCADE)
     data_sended = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=False)
+
 
 class DeletedMessages(models.Model):
     conversation = models.ForeignKey(Conversations, on_delete=models.CASCADE)
@@ -42,3 +45,7 @@ class BlackListedConverstations(models.Model):
     )
     blocked_at = models.DateTimeField(auto_now_add=True)
     is_permanent = models.BooleanField(default=False)
+
+    @classmethod
+    def get_block_reasons(cls):
+        return cls.BlockReasons

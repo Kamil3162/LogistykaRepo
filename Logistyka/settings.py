@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'Applications.UserManage',
     'Applications.MailBox',
     'Applications.Chat',
+    'daphne'
 ]
 
 MIDDLEWARE = [
@@ -96,7 +97,7 @@ PASSWORD_HASHERS = [
 ]
 
 WSGI_APPLICATION = 'Logistyka.wsgi.application'
-
+ASGI_APPLICATION = 'Logistyka.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
