@@ -14,44 +14,69 @@ from .models import (
 class ConversationConsumer(AsyncWebsocketConsumer):
 
     # active convarsations
-    async def connect(self):
-        # room zeby przysylac wiadomosci dla wszystkich i przyslac do wszystkich
-        self.user_id = self.scope['url_route']['kwargs']['userId']
-        self.user = self.scope['user']
-        self.conversations = self.active_conversations(self.user_id)
-        self.participans = self.get_all_participants()
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.user_group = None
+        self.participants = None
+        self.conversations = None
+        self.user = None
+        self.user_id = None
 
-        # we add each conversation to the same tunnel
-        # all will handle using this one channel
+    async def connect(self):
+        try:
+            self.user_id = self.scope['url_route']['kwargs']['userId']
+            self.user = await self.get_user(
+                self.user_id)  # Fetch user asynchronously
+            self.conversations = await self.active_conversations(self.user_id)
+            self.participants = await self.get_all_participants()  # Corrected spelling
+            self.user_group = f'group-{self.user_id}'
+
+            print(self.conversations)
+
+            for conversation in self.conversations:
+                await self.channel_layer.group_add(
+                    str(conversation.pk),  # Ensure PK is a string
+                    self.channel_name
+                )
+            await self.accept()
+
+            await self.send(text_data=json.dumps({
+                # 'type': 'chat_message',
+                'message': 'You are now connected!',
+                'user': self.user_id + 'naura',
+                'username': self.conversations
+            }))
+
+            await self.send_message('dsa')
+
+
+        except Exception as e:
+            print(f'Error in connect: {str(e)}')
+
+    async def disconnect(self, code):
         for conversation in self.conversations:
-            self.channel_layer.group_add(
-                conversation.pk,
+            await self.channel_layer.group_discard(
+                str(conversation.pk),
                 self.channel_name
             )
 
-        await self.accept()
+    # Make sure you have a corresponding handler for 'chat_message'
+    async def chat_message(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'connection_established',
-            'message': 'You are now connected!',
-            'user': self.user_id
+            'type': 'group_message',
+            'room_id': event['room_id'],
+            # 'username': event['username'],
+            'message': event['message']
         }))
 
-
-    async def disconnect(self, code):
-        pass
-
-    async def send(self, text_data=None, bytes_data=None, close=False):
-        pass
-
-    async def accept(self, subprotocol=None):
-        pass
-
-    async def receive(self, text_data=None, bytes_data=None):
-        pass
-
-    def notifyOnline(self):
-        self.channel_layer.send(
-
+    async def send_message(self, content):
+        await self.channel_layer.group_send(
+            self.user_group,
+            {
+                "room_id": 'esa',
+                "username": self.scope["user"].username,
+                "message": 'esa',
+            }
         )
 
     def saveMessage(self, userid, roomid, content):
@@ -68,6 +93,11 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             'conversation_id': conversation.pk,
             'content': message.data_created
         }
+
+    @database_sync_to_async
+    def get_user(self, user_id):
+        return CustomUser.objects.get(pk=user_id)
+
     @database_sync_to_async
     def changeUserOfline(self, user):
         participant_user = Participant.objects.get(user=user)
@@ -157,8 +187,9 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :return:
         """
         conversations = Conversations.objects.filter(participants=user_pk)
-        print(conversations)
-        return conversations
+        return list(conversations)
 
+    @database_sync_to_async
     def get_all_participants(self):
-        return Participant.objects.all().distinct()
+        participants = Participant.objects.all().distinct()
+        return list(participants)

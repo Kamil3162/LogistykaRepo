@@ -14,7 +14,8 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Logistyka.settings')
 django_asgi_app = get_asgi_application()
 
-from Applications.Chat import routing
+from Applications.Chat import customers
+from django.urls import re_path, path
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
@@ -24,7 +25,9 @@ application = ProtocolTypeRouter({
     'http':get_asgi_application(),
     'websocket':AuthMiddlewareStack(
         URLRouter(
-            routing.websocket_urlpatterns
+            [
+                re_path(r"^ws/users/(?P<userId>\w+)/$", customers.ConversationConsumer.as_asgi()),
+            ]
         )
     )
 })
