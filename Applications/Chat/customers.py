@@ -1,5 +1,5 @@
 import json
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db import IntegrityError, OperationalError
@@ -10,6 +10,7 @@ from .models import (
     Messages,
     BlackListedConverstations
 )
+from .serializers import ConversationSerializer, ParticipantSerializer
 
 class ConversationConsumer(AsyncWebsocketConsumer):
 
@@ -30,44 +31,78 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             self.conversations = await self.active_conversations(self.user_id)
             self.participants = await self.get_all_participants()  # Corrected spelling
             self.user_group = f'group-{self.user_id}'
+            conversations_pks = [con.pk for con in self.conversations]
 
-            print(self.conversations)
+            participants = self.get_participants(conversations_pks)
 
+            conversations_serialize = await sync_to_async(
+                lambda: [ConversationSerializer(conversation).data for
+                         conversation in self.conversations]
+            )()
+
+            # we connect with each channel to be active and get messages from users
             for conversation in self.conversations:
                 await self.channel_layer.group_add(
                     str(conversation.pk),  # Ensure PK is a string
                     self.channel_name
                 )
+
             await self.accept()
 
+            # we send data only for us not for all users this is tottally private
             await self.send(text_data=json.dumps({
                 # 'type': 'chat_message',
                 'message': 'You are now connected!',
                 'user': self.user_id + 'naura',
-                'username': self.conversations
+                'conversations': conversations_serialize
             }))
 
-            await self.send_message('dsa')
-
+            await self.change_status_to_online()
 
         except Exception as e:
             print(f'Error in connect: {str(e)}')
 
     async def disconnect(self, code):
-        for conversation in self.conversations:
-            await self.channel_layer.group_discard(
-                str(conversation.pk),
-                self.channel_name
-            )
+        """
+            Function invoke during exit card chat , for every login we connect
+        :param code:
+        :return:
+        """
+        await self.change_status_to_offline()
 
-    # Make sure you have a corresponding handler for 'chat_message'
+    async def receive(self, text_data=None, bytes_data=None):
+        if text_data:
+            text_data_json = json.loads(text_data)
+
+            message = text_data_json.get('message')
+            roomid = text_data_json.get('room_id')
+            userid = text_data_json.get('user')
+
+            print("Received message:", message)
+            print(message, roomid, userid)
+            await self.saveMessage(userid, roomid, message)
+
+            await self.send(text_data=json.dumps({
+                'type': 'message_received',
+                'message': message
+            }))
+
     async def chat_message(self, event):
+        """
+            Function responsible for sending message
+        :param event:
+        :return:
+        """
         await self.send(text_data=json.dumps({
             'type': 'group_message',
-            'room_id': event['room_id'],
             # 'username': event['username'],
             'message': event['message']
         }))
+
+    # async def websocket_receive(self, message):
+    #     print("esssa")
+    #     print(message)
+    #     pass
 
     async def send_message(self, content):
         await self.channel_layer.group_send(
@@ -79,20 +114,77 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             }
         )
 
+    async def change_status_to_offline(self):
+        """
+            We need to send to entire and each group where we are that we turn off our appliciation
+        :return:
+        """
+        participant = self.changeParticipantStatus(False)
+        for conversation in self.conversations:
+            await self.channel_layer.group_send(
+                str(conversation.pk),
+                {
+                    'type': 'chat_message',
+                    'message': f'{self.user.first_name} is False',
+                    'active': False
+                }
+            )
+            await self.channel_layer.group_discard(
+                str(conversation.pk),
+                self.channel_name
+            )
+
+    async def change_status_to_online(self):
+        """
+            We need to send to entire and each group where we are that we turn off our appliciation
+            :return:
+        """
+        participant = self.changeParticipantStatus(True)
+        for conversation in self.conversations:
+            await self.channel_layer.group_send(
+                str(conversation.pk),
+                {
+                    'type': 'chat_message',
+                    'message': f'{self.user.first_name} is Active',
+                    'active': True
+                }
+            )
+
+    @database_sync_to_async
+    def changeParticipantStatus(self, status):
+        """
+        In status option we have only two posibilities True and False
+        True is online, False is offline
+        :param status:
+        :return:
+        """
+        try:
+            participant = Participant.objects.get(user=self.user)
+            participant.active = True
+            participant.save()
+            return participant
+        except Participant.DoesNotExist:
+            return False
+    @database_sync_to_async
     def saveMessage(self, userid, roomid, content):
-        sender = CustomUser.objects.get(pk=userid)
-        conversation = Conversations.objects.get(pk=roomid)
-        message = Messages.objects.create(
-            sender=sender,
-            conversation=conversation,
-            content=content
-        )
-        return {
-            'action':'message',
-            'user_id': sender.pk,
-            'conversation_id': conversation.pk,
-            'content': message.data_created
-        }
+        try:
+            print("esa esa")
+            sender = CustomUser.objects.get(pk=userid)
+            conversation = Conversations.objects.get(pk=roomid)
+            message = Messages.objects.create(
+                sender=sender,
+                converstation=conversation,
+                content=content
+            )
+            return {
+                'action':'message',
+                'user_id': sender.pk,
+                'conversation_id': conversation.pk,
+                'content': message.data_created
+            }
+
+        except Exception as e:
+            raise Exception(str(e))
 
     @database_sync_to_async
     def get_user(self, user_id):
@@ -158,9 +250,12 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :param participats:
         :return:
         """
-        return Participant.objects.filter(
+        print("participants - exec")
+        participants = Participant.objects.filter(
             conversation__id__in=conversations_pk
         ).select_related('user')
+        print(participants)
+        return list(participants)
 
 
     @database_sync_to_async
