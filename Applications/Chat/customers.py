@@ -10,7 +10,11 @@ from .models import (
     Messages,
     BlackListedConverstations
 )
-from .serializers import ConversationSerializer, ParticipantSerializer
+from .serializers import (
+    ConversationSerializer,
+    ParticipantSerializer,
+    MessageSerializer
+)
 
 class ConversationConsumer(AsyncWebsocketConsumer):
 
@@ -74,18 +78,38 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         if text_data:
             text_data_json = json.loads(text_data)
 
+            message_type = text_data_json.get('type')
             message = text_data_json.get('message')
             roomid = text_data_json.get('room_id')
             userid = text_data_json.get('user')
 
-            print("Received message:", message)
-            print(message, roomid, userid)
-            await self.saveMessage(userid, roomid, message)
+            if message_type == 'get_messages':
+                await self.generate_messages(roomid)
+            else:
+                await self.send_message(message, roomid)
 
-            await self.send(text_data=json.dumps({
-                'type': 'message_received',
-                'message': message
-            }))
+                await self.saveMessage(userid, roomid, message)
+
+                await self.send(text_data=json.dumps({
+                    'type': 'new_message',
+                    'message': message
+                }))
+    async def generate_messages(self, conversation_id):
+        """
+            During click on our chat we should send a message that we
+        :return:
+        """
+        serializer_data = await self.get_messages_sync(conversation_id)
+        await self.send(text_data=json.dumps({
+            'type': 'all_messages',
+            'room_id': conversation_id,
+            'messages': serializer_data
+        }))
+    @sync_to_async
+    def get_messages_sync(self, conversation_id):
+        all_messages = Messages.objects.filter(converstation_id=conversation_id)
+        serializer = MessageSerializer(instance=all_messages, many=True)
+        return serializer.data
 
     async def chat_message(self, event):
         """
@@ -99,18 +123,13 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             'message': event['message']
         }))
 
-    # async def websocket_receive(self, message):
-    #     print("esssa")
-    #     print(message)
-    #     pass
-
-    async def send_message(self, content):
+    async def send_message(self, content, conversation_pk):
         await self.channel_layer.group_send(
-            self.user_group,
+            str(conversation_pk),
             {
-                "room_id": 'esa',
-                "username": self.scope["user"].username,
-                "message": 'esa',
+                'type': 'chat_message',
+                'room_id':conversation_pk,
+                'message': content,
             }
         )
 
@@ -165,10 +184,10 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             return participant
         except Participant.DoesNotExist:
             return False
+
     @database_sync_to_async
     def saveMessage(self, userid, roomid, content):
         try:
-            print("esa esa")
             sender = CustomUser.objects.get(pk=userid)
             conversation = Conversations.objects.get(pk=roomid)
             message = Messages.objects.create(
