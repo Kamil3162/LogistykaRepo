@@ -83,6 +83,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             roomid = text_data_json.get('room_id')
             userid = text_data_json.get('user')
 
+            print(message, message_type, roomid, userid)
             if message_type == 'get_messages':
                 await self.generate_messages(roomid)
             else:
@@ -94,6 +95,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                     'type': 'new_message',
                     'message': message
                 }))
+
     async def generate_messages(self, conversation_id):
         """
             During click on our chat we should send a message that we
@@ -105,6 +107,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             'room_id': conversation_id,
             'messages': serializer_data
         }))
+
     @sync_to_async
     def get_messages_sync(self, conversation_id):
         all_messages = Messages.objects.filter(converstation_id=conversation_id)
@@ -117,18 +120,26 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :param event:
         :return:
         """
+        room_id = event.get('room_id')
+        message = event.get('message')
+        user_id = event.get('user_id')
+
+        print("twoj stary pijany")
         await self.send(text_data=json.dumps({
             'type': 'group_message',
-            # 'username': event['username'],
-            'message': event['message']
+            'room_id': room_id,
+            'message': event['message'],
+            'user_id': user_id,
         }))
 
     async def send_message(self, content, conversation_pk):
+        print("sending message")
         await self.channel_layer.group_send(
             str(conversation_pk),
             {
                 'type': 'chat_message',
                 'room_id':conversation_pk,
+                'user_id': self.user_id,
                 'message': content,
             }
         )
@@ -145,7 +156,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': f'{self.user.first_name} is False',
-                    'active': False
+                    'active': False,
                 }
             )
             await self.channel_layer.group_discard(
@@ -165,7 +176,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': f'{self.user.first_name} is Active',
-                    'active': True
+                    'active': True,
                 }
             )
 
