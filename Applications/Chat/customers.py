@@ -83,7 +83,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             roomid = text_data_json.get('room_id')
             userid = text_data_json.get('user')
 
-            print(message, message_type, roomid, userid)
             if message_type == 'get_messages':
                 await self.generate_messages(roomid)
             else:
@@ -124,7 +123,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         message = event.get('message')
         user_id = event.get('user_id')
 
-        print("twoj stary pijany")
         await self.send(text_data=json.dumps({
             'type': 'group_message',
             'room_id': room_id,
@@ -133,7 +131,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_message(self, content, conversation_pk):
-        print("sending message")
         await self.channel_layer.group_send(
             str(conversation_pk),
             {
