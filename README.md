@@ -8,30 +8,29 @@ Project is not finished
 Session is based on JWT token 
 
 # /trucks
-![trucks.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Ftrucks.png)
+![trucks.png](trucks.png)
 # /truck
-![truck.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Ftruck.png)
+[truck.png](truck.png)
 # /semitrailers
-![semitrailers.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Fsemitrailers.png)
+![semitrailers.png](semitrailers.png)
 # /semitrailer
-![react_o6.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o6.png)
+![react_o6.png](react_o6.png)
 # /users
-![users.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Fusers.png)
+![users.png](users.png)
 # /user
-![react_o3.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o3.png)
+![react_o3.png](react_o3.png)
 # /receivment-create/
-![react3.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact3.png)
+![react3.png](react3.png)
 # /active-receivment/
-![react_o7.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o7.png)
+![react7 (2).png](react7%20%282%29.png)
 # /receivments
-![react_o8.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o8.png)
+![react_o8.png](react_o8.png)
 # /semitrailer-create
-![react_o4.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o4.png)
+![react_o4.png](react_o4.png)
 # /home
-![react_o11.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o11.png)
+![react_o11.png](react_o11.png)
 # /chat
-![react_o1.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact_o1.png)
+![react_o1.png](react_o1.png)
 # /login
-![react4.png](..%2F..%2F..%2F..%2FOneDrive%2FPulpit%2Freact4.png)
-
+![react4.png](react4.png)
 
