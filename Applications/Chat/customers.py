@@ -1,6 +1,7 @@
 import json
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
+from django.db.models import Q
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db import IntegrityError, OperationalError
 from ..UserManage.models import CustomUser
@@ -39,6 +40,8 @@ class ConversationConsumer(AsyncWebsocketConsumer):
 
             participants = self.get_participants(conversations_pks)
 
+            print(self.conversations)
+
             conversations_serialize = await sync_to_async(
                 lambda: [ConversationSerializer(conversation).data for
                          conversation in self.conversations]
@@ -60,7 +63,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 'user': self.user_id + 'naura',
                 'conversations': conversations_serialize
             }))
-
             await self.change_status_to_online()
 
         except Exception as e:
@@ -77,7 +79,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
             text_data_json = json.loads(text_data)
-
             message_type = text_data_json.get('type')
             message = text_data_json.get('message')
             roomid = text_data_json.get('room_id')
@@ -146,7 +147,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             We need to send to entire and each group where we are that we turn off our appliciation
         :return:
         """
-        participant = self.changeParticipantStatus(False)
+        participant = await self.changeParticipantStatus(False)
         for conversation in self.conversations:
             await self.channel_layer.group_send(
                 str(conversation.pk),
@@ -166,7 +167,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             We need to send to entire and each group where we are that we turn off our appliciation
             :return:
         """
-        participant = self.changeParticipantStatus(True)
+        participant = await self.changeParticipantStatus(True)
         for conversation in self.conversations:
             await self.channel_layer.group_send(
                 str(conversation.pk),
@@ -185,11 +186,14 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :param status:
         :return:
         """
+        print(f'wykonywanie change status {status}')
         try:
-            participant = Participant.objects.get(user=self.user)
-            participant.active = True
-            participant.save()
-            return participant
+            participants = Participant.objects.filter(user=self.user).distinct()
+            for participant in participants:
+                print(participant)
+                participant.active = status
+                participant.save()
+            return participants
         except Participant.DoesNotExist:
             return False
 

@@ -87,10 +87,15 @@ class ReceivmentCreateView(CreateAPIView):
                 Sender is a driver those wanna create new receivment
                 Transferring user is a manager which rent a car
             '''
+
+
             state_busy = SemiTrailer.get_choices()[1][1]
             manager_chose = ManagerSelect()
             data = request.data
             transferring_user = manager_chose.chose_random_manager()
+
+            print(request.data)
+
             sender = get_object_or_404(CustomUser, pk=data.get('destination_user'))
 
             truck = get_object_or_404(Truck, pk=data.get('truck'))
@@ -105,6 +110,8 @@ class ReceivmentCreateView(CreateAPIView):
             driver_location = Receivment.driver_manager.get_latest_driver_location(
                 driver=sender
             ).destination
+
+            print(driver_location)
 
             literal_driver_location = driver_location.concatination_address()
 
