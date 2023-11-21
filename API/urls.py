@@ -44,6 +44,8 @@ urlpatterns = [
     path('truck-equipment-create/',
          truck_views.TruckEquipmentCreateView.as_view(),
          name='truckequipment-create'),
+    path('truck-equipment/<int:pk>/', truck_views.TruckEquipmentDetailView.as_view(),
+         name='truckequipment-detail'),
     path('receivment-create/',
          receivment_views.ReceivmentCreateView.as_view(),
          name='receivments'),

@@ -83,48 +83,56 @@ class ReceivmentCreateView(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            '''
-                Sender is a driver those wanna create new receivment
-                Transferring user is a manager which rent a car
-            '''
-
+            """
+            Create a new receivment based on the provided data.
+        
+            Args:
+                request: The HTTP request object.
+                data: The data containing information for creating the receivment.
+        
+            Returns:
+                dict: A dictionary containing information about the created receivment.
+            """
+            data = request.data
+            driver_location = None
+            information_response = dict()
+            status_code = None
 
             state_busy = SemiTrailer.get_choices()[1][1]
             manager_chose = ManagerSelect()
-            data = request.data
             transferring_user = manager_chose.chose_random_manager()
 
-            print(request.data)
 
             sender = get_object_or_404(CustomUser, pk=data.get('destination_user'))
-
             truck = get_object_or_404(Truck, pk=data.get('truck'))
-
             semi_trailer = get_object_or_404(SemiTrailer,
                                              pk=data.get('semi_trailer'))
-
-            information_response = dict()
-            status_code = None
 
             # we return instance of receivment with all data
             driver_location = Receivment.driver_manager.get_latest_driver_location(
                 driver=sender
-            ).destination
+            )
 
-            print(driver_location)
+            if driver_location is False:
+                driver_location = ReceivmentLocations.location_manager.get_base_location()
+
 
             literal_driver_location = driver_location.concatination_address()
 
-            # receivment location to drive
+            # this function calculate the closest place to delivery
+            # return instance those we need to create new instance in our db
             target_location = Receivment.driver_manager.pick_receivment(
                 literal_driver_location
             )
+
+            print(target_location)
 
             data['source_user'] = transferring_user.pk
             data['destination_user'] = sender.pk
             data['truck'] = truck.pk
             data['semi_trailer'] = semi_trailer.pk
             data['destination'] = target_location.pk
+
 
             # If active receivment is not None we cant create new receivment
             active_receivments = Receivment.objects.filter(

@@ -5,16 +5,21 @@ from .managers.custom_managers import ReceivmentManager
 from ..TruckManage.models import Truck
 from ..UserManage.models import CustomUser
 from ..SemitruckManage.models import SemiTrailer
+from .managers.location_manager import LocationManager
 from django.utils.translation import gettext_lazy as _
 from enum import Enum
 
 class ReceivmentLocations(models.Model):
-    city = models.CharField(max_length=30)
-    street = models.CharField(max_length=40, blank=True)
-    apartment_number = models.CharField(max_length=6, blank=True)
+
+    city = models.CharField(max_length=30, default='Jarosław')
+    street = models.CharField(max_length=40, blank=True, default='Czarneckiego')
+    apartment_number = models.CharField(max_length=6, blank=True, default='16')
     geo_address = models.CharField(max_length=30, blank=True)
     data_created = models.DateTimeField(auto_now_add=True)
     final_date = models.DateField(null=True, blank=True)
+
+    objects = models.Manager()
+    location_manager = LocationManager()
 
     def __str__(self):
         return str(self.id)

@@ -22,27 +22,43 @@ class ReceivmentManager(models.Manager):
     def get_queryset(self):
         return models.QuerySet(self.model, using=self._db)
 
+    def create_base_location(self):
+        pass
 
     def get_latest_driver_location(self, driver):
-        Receivment = apps.get_model('ReceivmentManage', 'Receivment')
-        self.statutes = Receivment.get_statuses()
-        result = self.get_queryset().filter(
+        """
+            Args:
+                Driver is an stance of user those we pass in our function
+                Using this instance we try to get instace of finish receivment and last driver location
+            Return:
+                Return instace of finished location or False
+        """
+
+        self.statutes = self.model.get_statuses()
+        result = self.filter(
             models.Q(status=self.statutes.FINISHED) &
             models.Q(destination_user=driver)
         ).order_by('date_finished').last()
-        return result
+        if result:
+            return result.destination
+        return False
 
     def pick_receivment(self, source_address):
         """
                 Fetches the distance and duration from the source address to the destination address.
                 :param destination_address: The destination address.
                 :return: A tuple of (distance, duration).
-                """
+        """
+        # return an instance of ReceivmentLocations like final for clarify
         destination_list = self.get_receivment_to_realize()
         for address, recievment_object in destination_list.items():
+
+            print(recievment_object)
+
             destination_matrix = self.GOOGLE_CLIENT.distance_matrix(
                 source_address, address
             )['rows'][0]['elements'][0]
+            print(destination_matrix)
 
             if destination_matrix.get('status') == 'NOT_FOUND':
                 continue
@@ -58,6 +74,7 @@ class ReceivmentManager(models.Manager):
                 self.closest_distance = address
                 self.latest_distance = distance
                 self.closest_object = recievment_object
+        print(self.closest_object)
 
         return self.closest_object
 
@@ -67,9 +84,21 @@ class ReceivmentManager(models.Manager):
         :return: dict{'city, street apartment_number':object,}
         """
         ReceivmentLocations = apps.get_model('ReceivmentManage', 'ReceivmentLocations')
-        active_locations = ReceivmentLocations.objects.all()
+
+        # Get IDs of ReceivmentLocations that are assigned to a Receivment
+        assigned_location_ids = self.model.objects.exclude(
+            destination_id__isnull=True) \
+            .values_list('destination_id', flat=True) \
+            .distinct()
+
+
+        # Get ReceivmentLocations not assigned to any Receivment
+        unassigned_locations = ReceivmentLocations.objects.exclude(
+            id__in=assigned_location_ids)
+
+
         active_literal_locations = {
-            x.concatination_address(): x for x in active_locations
+            x.concatination_address(): x for x in unassigned_locations
         }
         return active_literal_locations
 

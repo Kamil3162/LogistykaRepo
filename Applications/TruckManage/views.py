@@ -123,12 +123,13 @@ class TruckEquipmentDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         truck_id = self.kwargs.get(self.lookup_url_kwarg)
+        print(truck_id)
         return TruckEquipment.objects.get(truck_id=truck_id)
 
     def retrieve(self, request, *args, **kwargs):
         try:
             truck_equipment = self.get_object()
-            serializer = self.get_serializer(instace=truck_equipment)
+            serializer = self.get_serializer(truck_equipment)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(data={'error': str(e)},
