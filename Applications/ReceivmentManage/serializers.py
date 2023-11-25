@@ -97,6 +97,26 @@ class ReceivmentsSerializerDetail(serializers.ModelSerializer):
         model = Receivment
         fields = '__all__'
 
+    def finish_receivment(self, instance):
+        try:
+            instance.status = Receivment.StatusChoices.FINISHED
+            instance.date_finished = timezone.now()
+            instance.save()
+
+            finish_receivment = Receivment.objects.create(
+                source_user=instance.destination_user,
+                destination_user=instance.source_user,
+                semi_trailer=instance.semi_trailer,
+                truck=instance.truck,
+                status=Receivment.StatusChoices.FINISHED,
+                receivment_type=Receivment.ReceivmentType.DRIVER
+            )
+            return finish_receivment
+
+        except Exception:
+            raise Exception("Something is bad")
+
+
 
 class ReceivmentSerializer(serializers.ModelSerializer):
     # add field destination like serializer instance in another serializer
@@ -140,16 +160,15 @@ class ReceivmentSerializer(serializers.ModelSerializer):
             instance.status = Receivment.StatusChoices.FINISHED
             instance.date_finished = timezone.now()
             instance.save()
-
-            finish_receivment = Receivment.objects.create(
-                source_user=instance.destination_user,
-                destination_user=instance.source_user,
-                semi_trailer=instance.semi_trailer,
-                truck=instance.truck,
-                status=Receivment.StatusChoices.FINISHED,
-                receivment_type=Receivment.ReceivmentType.DRIVER
-            )
-            return finish_receivment
+            # finish_receivment = Receivment.objects.create(
+            #     source_user=instance.destination_user,
+            #     destination_user=instance.source_user,
+            #     semi_trailer=instance.semi_trailer,
+            #     truck=instance.truck,
+            #     status=Receivment.StatusChoices.FINISHED,
+            #     receivment_type=Receivment.ReceivmentType.DRIVER
+            # )
+            return instance
 
         except Exception:
             raise Exception("Something is bad")

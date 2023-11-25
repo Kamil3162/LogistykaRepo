@@ -53,14 +53,11 @@ class ReceivmentManager(models.Manager):
         destination_list = self.get_receivment_to_realize()
         for address, recievment_object in destination_list.items():
 
-            print(recievment_object)
-
             destination_matrix = self.GOOGLE_CLIENT.distance_matrix(
                 source_address, address
             )['rows'][0]['elements'][0]
-            print(destination_matrix)
 
-            if destination_matrix.get('status') == 'NOT_FOUND':
+            if destination_matrix.get('distance') is None:
                 continue
 
             distance = destination_matrix['distance']['value']
@@ -74,7 +71,6 @@ class ReceivmentManager(models.Manager):
                 self.closest_distance = address
                 self.latest_distance = distance
                 self.closest_object = recievment_object
-        print(self.closest_object)
 
         return self.closest_object
 

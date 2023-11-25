@@ -49,27 +49,50 @@ class ReceivmentModelViewSet(ModelViewSet):
                 in ours vehicles. Change State is crucial because we wanna
                 use these vehicles in next future receivments
             '''
-            status_choices = SemiTrailer.CHOICES
-            data = {
-                'available': status_choices[1][0]
-            }
 
             receivment_instance = Receivment.objects.get(pk=pk)
+
             semi_trailer = receivment_instance.semi_trailer
             truck = receivment_instance.truck
 
+            status_choices = SemiTrailer.CHOICES
+            data = {
+                'available': status_choices[0][0]
+            }
+
             serializer = self.get_serializer(instance=receivment_instance)
             serializer.finish_receivment(receivment_instance)
-            truck_serializer = TruckSerializer.update(instance=truck,
-                                                      validated_data=data)
-            semitrailer_serializer = SemiTrailerSerializer.update(
-                instance=semi_trailer, validated_data=data
+
+            truck_serializer = TruckSerializer(
+                instance=truck,
+                data=data,
+                partial=True
             )
+
+            semitrailer_serializer = SemiTrailerSerializer(
+                instance=semi_trailer,
+                data=data,
+                partial=True
+            )
+
+            if truck_serializer.is_valid():
+                truck_serializer.save()
+            else:
+                raise ValueError("Invalid data for truck update")
+
+
+            if semitrailer_serializer.is_valid():
+                semitrailer_serializer.save()
+            else:
+                raise ValueError("Invalid data for truck update")
+
+
             return Response(data={'success': 'success'},
                             status=status.HTTP_200_OK)
-        except Exception:
-            return Response(data={'success': 'success'},
+        except Exception as e:
+            return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # def list(self, request, *args, **kwargs):
     #     return super().list(request, *args, **kwargs)
@@ -94,6 +117,7 @@ class ReceivmentCreateView(CreateAPIView):
                 dict: A dictionary containing information about the created receivment.
             """
             data = request.data
+
             driver_location = None
             information_response = dict()
             status_code = None
@@ -112,6 +136,8 @@ class ReceivmentCreateView(CreateAPIView):
             driver_location = Receivment.driver_manager.get_latest_driver_location(
                 driver=sender
             )
+
+            print(driver_location)
 
             if driver_location is False:
                 driver_location = ReceivmentLocations.location_manager.get_base_location()

@@ -21,7 +21,7 @@ from rest_framework.pagination import PageNumberPagination
 # find . -path "*/__pycache__" -type d -exec rm -r {} ';'
 
 class PaginationClass(PageNumberPagination):
-    page_size = 3
+    page_size = 4
 
 class TruckViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated, )
