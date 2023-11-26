@@ -103,15 +103,15 @@ class ReceivmentsSerializerDetail(serializers.ModelSerializer):
             instance.date_finished = timezone.now()
             instance.save()
 
-            finish_receivment = Receivment.objects.create(
-                source_user=instance.destination_user,
-                destination_user=instance.source_user,
-                semi_trailer=instance.semi_trailer,
-                truck=instance.truck,
-                status=Receivment.StatusChoices.FINISHED,
-                receivment_type=Receivment.ReceivmentType.DRIVER
-            )
-            return finish_receivment
+            # finish_receivment = Receivment.objects.create(
+            #     source_user=instance.destination_user,
+            #     destination_user=instance.source_user,
+            #     semi_trailer=instance.semi_trailer,
+            #     truck=instance.truck,
+            #     status=Receivment.StatusChoices.FINISHED,
+            #     receivment_type=Receivment.ReceivmentType.DRIVER
+            # )
+            return instance
 
         except Exception:
             raise Exception("Something is bad")
@@ -125,23 +125,9 @@ class ReceivmentSerializer(serializers.ModelSerializer):
         model = Receivment
         fields = '__all__'
 
-    # def validate(self, data):
-    #     print('validate function')
-    #     data['destination_user'] = self.validate_and_get_object(CustomUser, data.get('destination_user'))
-    #     data['source_user'] = self.validate_and_get_object(CustomUser, data.get('source_user'))
-    #     data['truck'] = self.validate_and_get_object(Truck, data.get('truck'))
-    #     data['semi_trailer'] = self.validate_and_get_object(SemiTrailer, data.get('semi_trailer'))
-    #     data['destination'] = self.validate_and_get_object(ReceivmentLocations, data.get('destination'))
-    #     return data
-    #
-    # def validate_and_get_object(self, model, pk):
-    #     try:
-    #         return model.objects.get(pk=pk)
-    #     except ObjectDoesNotExist:
-    #         raise serializers.ValidationError(f"{model.__name__} with id {pk} does not exist.")
-
     def create(self, validated_data):
         try:
+            print(validated_data)
             # destination user is a driver who took truck
             # source user is a manager those apply document
             receivment = Receivment.objects.create(

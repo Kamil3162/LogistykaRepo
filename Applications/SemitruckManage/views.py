@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -119,7 +120,7 @@ class SemiTruckEquipmentCreate(CreateAPIView):
 
 
 class SemiTruckEquipmentDetail(RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)
     serializer_class = SemiTrailerEquipmentSerializer
     lookup_url_kwarg = 'pk'
@@ -137,7 +138,7 @@ class SemiTruckEquipmentDetail(RetrieveUpdateDestroyAPIView):
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         try:
             data = self.request.data
             semi_equipment = self.get_object()

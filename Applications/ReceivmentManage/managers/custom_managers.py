@@ -35,10 +35,12 @@ class ReceivmentManager(models.Manager):
         """
 
         self.statutes = self.model.get_statuses()
+        print(self.statutes)
         result = self.filter(
             models.Q(status=self.statutes.FINISHED) &
             models.Q(destination_user=driver)
         ).order_by('date_finished').last()
+        print(result)
         if result:
             return result.destination
         return False
@@ -113,7 +115,12 @@ class ReceivmentManager(models.Manager):
         try:
             Receivment = apps.get_model('ReceivmentManage', 'Receivment')
             statuses = Receivment.get_statuses()
-            return self.get_queryset().get(
+            print(statuses.IN_PROGESS)
+            print(self.filter(
+                models.Q(status=statuses.IN_PROGESS)
+                # models.Q(destination_user=user)
+            ))
+            return self.filter(
                 models.Q(status=statuses.IN_PROGESS) &
                 models.Q(destination_user=user)
             )

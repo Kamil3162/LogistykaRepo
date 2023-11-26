@@ -94,10 +94,6 @@ class ReceivmentModelViewSet(ModelViewSet):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-    # def list(self, request, *args, **kwargs):
-    #     return super().list(request, *args, **kwargs)
-
-
 class ReceivmentCreateView(CreateAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (authentication.JWTAuthentication, )
@@ -137,11 +133,9 @@ class ReceivmentCreateView(CreateAPIView):
                 driver=sender
             )
 
-            print(driver_location)
 
             if driver_location is False:
                 driver_location = ReceivmentLocations.location_manager.get_base_location()
-
 
             literal_driver_location = driver_location.concatination_address()
 
@@ -150,8 +144,6 @@ class ReceivmentCreateView(CreateAPIView):
             target_location = Receivment.driver_manager.pick_receivment(
                 literal_driver_location
             )
-
-            print(target_location)
 
             data['source_user'] = transferring_user.pk
             data['destination_user'] = sender.pk
@@ -255,6 +247,7 @@ class ActiveUserReceivment(RetrieveUpdateAPIView):
     def get_object(self):
         try:
             user = self.request.user    # this instace to make an filter
+            print(user)
             receivment = Receivment.driver_manager.get_active_receivement(user)
             return receivment
         except Receivment.DoesNotExist:
@@ -267,6 +260,7 @@ class ActiveUserReceivment(RetrieveUpdateAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             receivment_object = self.get_object()
+
             serializer = self.get_serializer(instance=receivment_object)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
         except Exception as e:

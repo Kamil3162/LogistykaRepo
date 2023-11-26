@@ -135,9 +135,10 @@ class TruckEquipmentDetailView(RetrieveUpdateDestroyAPIView):
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         try:
-            data = self.request
+            data = self.request.data
+            print(data)
             semi_equipment = self.get_object()
             serializer = self.get_serializer(data=data,
                                              instance=semi_equipment,
