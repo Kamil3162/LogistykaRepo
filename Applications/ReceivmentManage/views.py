@@ -23,6 +23,7 @@ from ..SemitruckManage.models import SemiTrailer
 from .utils.select_manager import ManagerSelect
 from .models import Receivment, ReceivmentLocations, LocationHistory
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.forms.models import model_to_dict
 from django.utils import timezone
 
 class CustomPagination(PageNumberPagination):
@@ -133,7 +134,6 @@ class ReceivmentCreateView(CreateAPIView):
                 driver=sender
             )
 
-
             if driver_location is False:
                 driver_location = ReceivmentLocations.location_manager.get_base_location()
 
@@ -144,6 +144,8 @@ class ReceivmentCreateView(CreateAPIView):
             target_location = Receivment.driver_manager.pick_receivment(
                 literal_driver_location
             )
+
+            print(target_location)
 
             data['source_user'] = transferring_user.pk
             data['destination_user'] = sender.pk
@@ -172,8 +174,8 @@ class ReceivmentCreateView(CreateAPIView):
                     'apartment_number': target_location.apartment_number
                 }
 
-                data['source_user'] = sender
-                data['destination_user'] = transferring_user
+                data['source_user'] = transferring_user
+                data['destination_user'] = sender
                 data['truck'] = truck
                 data['semi_trailer'] = semi_trailer
                 data['destination'] = target_location
@@ -247,7 +249,6 @@ class ActiveUserReceivment(RetrieveUpdateAPIView):
     def get_object(self):
         try:
             user = self.request.user    # this instace to make an filter
-            print(user)
             receivment = Receivment.driver_manager.get_active_receivement(user)
             return receivment
         except Receivment.DoesNotExist:
@@ -260,7 +261,6 @@ class ActiveUserReceivment(RetrieveUpdateAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             receivment_object = self.get_object()
-
             serializer = self.get_serializer(instance=receivment_object)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -319,6 +319,8 @@ class HandeLocationHistoryApiView(APIView):
                 # Get the last location if it exists
                 last_location = last_locations.first()
 
+                # {"error": "we have to create new instance using post method"}
+
                 if last_location is not None:
                     # Prepare the serializer with the instance and data
                     serializer = LocationHistorySerializer(
@@ -362,8 +364,9 @@ class HandeLocationHistoryApiView(APIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            locations_history = self.get_queryset()
+            receivment, locations_history = self.get_queryset()
             serializer = LocationHistorySerializer(locations_history, many=True)
+            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)},

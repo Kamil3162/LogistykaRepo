@@ -128,8 +128,10 @@ class ReceivmentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             print(validated_data)
+
             # destination user is a driver who took truck
             # source user is a manager those apply document
+
             receivment = Receivment.objects.create(
                 destination_user=validated_data.get('destination_user'),
                 source_user=validated_data.get('source_user'),

@@ -35,12 +35,10 @@ class ReceivmentManager(models.Manager):
         """
 
         self.statutes = self.model.get_statuses()
-        print(self.statutes)
         result = self.filter(
             models.Q(status=self.statutes.FINISHED) &
             models.Q(destination_user=driver)
         ).order_by('date_finished').last()
-        print(result)
         if result:
             return result.destination
         return False
@@ -54,16 +52,19 @@ class ReceivmentManager(models.Manager):
         # return an instance of ReceivmentLocations like final for clarify
         destination_list = self.get_receivment_to_realize()
         for address, recievment_object in destination_list.items():
-
             destination_matrix = self.GOOGLE_CLIENT.distance_matrix(
                 source_address, address
             )['rows'][0]['elements'][0]
+
+            print(destination_matrix)
 
             if destination_matrix.get('distance') is None:
                 continue
 
             distance = destination_matrix['distance']['value']
             duration = destination_matrix['duration']['value']
+
+            print(distance, duration)
 
             if self.closest_distance is not None:
                 if distance < self.latest_distance:
@@ -94,7 +95,6 @@ class ReceivmentManager(models.Manager):
         unassigned_locations = ReceivmentLocations.objects.exclude(
             id__in=assigned_location_ids)
 
-
         active_literal_locations = {
             x.concatination_address(): x for x in unassigned_locations
         }
@@ -115,15 +115,10 @@ class ReceivmentManager(models.Manager):
         try:
             Receivment = apps.get_model('ReceivmentManage', 'Receivment')
             statuses = Receivment.get_statuses()
-            print(statuses.IN_PROGESS)
-            print(self.filter(
-                models.Q(status=statuses.IN_PROGESS)
-                # models.Q(destination_user=user)
-            ))
             return self.filter(
                 models.Q(status=statuses.IN_PROGESS) &
                 models.Q(destination_user=user)
-            )
+            ).first()
         except KeyError as e:
             raise KeyError(str(e))
         except ObjectDoesNotExist as e:

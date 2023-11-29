@@ -8,6 +8,7 @@ from django.apps import apps
 class ManagerSelect:
     def __init__(self):
         self._managers = CustomUser.objects.filter(groups__name='Manager')
+        self._drivers = CustomUser.objects.filter(groups__name='Driver')
         self.manager = None
 
     def chose_random_manager(self):
