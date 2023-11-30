@@ -5,6 +5,7 @@ from django.db.models import Q
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.db import IntegrityError, OperationalError
 from ..UserManage.models import CustomUser
+from ..UserManage.serializers import CustomChatUserSerializer
 from .models import (
     Participant,
     Conversations,
@@ -16,6 +17,7 @@ from .serializers import (
     ParticipantSerializer,
     MessageSerializer
 )
+
 
 class ConversationConsumer(AsyncWebsocketConsumer):
 
@@ -33,13 +35,14 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             self.user_id = self.scope['url_route']['kwargs']['userId']
             self.user = await self.get_user(
                 self.user_id)  # Fetch user asynchronously
+
             self.conversations = await self.active_conversations(self.user_id)
             self.participants = await self.get_all_participants()  # Corrected spelling
+
             self.user_group = f'group-{self.user_id}'
             conversations_pks = [con.pk for con in self.conversations]
 
-            participants = self.get_participants(conversations_pks)
-
+            participants = await self.get_participants(conversations_pks)
             print(self.conversations)
 
             conversations_serialize = await sync_to_async(
@@ -56,12 +59,21 @@ class ConversationConsumer(AsyncWebsocketConsumer):
 
             await self.accept()
 
+            users_not_participants = await self.get_all_users()
+
+            users_serializer = await sync_to_async(
+                lambda : [CustomChatUserSerializer(user).data for
+                user in users_not_participants]
+            )()
+
+
             # we send data only for us not for all users this is tottally private
             await self.send(text_data=json.dumps({
                 # 'type': 'chat_message',
                 'message': 'You are now connected!',
                 'user': self.user_id + 'naura',
-                'conversations': conversations_serialize
+                'conversations': conversations_serialize,
+                'users': users_serializer
             }))
             await self.change_status_to_online()
 
@@ -281,12 +293,42 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :param participats:
         :return:
         """
-        print("participants - exec")
+        print("PARTICIPANTS get alll -esa")
         participants = Participant.objects.filter(
-            conversation__id__in=conversations_pk
-        ).select_related('user')
-        print(participants)
-        return list(participants)
+            conversation__id__in=conversations_pk,
+        ).select_related('user').exclude(user_id=self.user.pk).distinct()
+
+        unique_participants = []
+        seen_user_ids = set()
+
+        for participant in participants:
+            if participant.user_id not in seen_user_ids:
+                unique_participants.append(participant)
+                seen_user_ids.add(participant.user_id)
+
+        return unique_participants
+
+    @database_sync_to_async
+    def get_all_users(self):
+        """
+            This function we will use to return all users to potencially start a conversations
+            1 FIrst step to make an get to check doest we have a conversation or
+            2 Divide this on two types of messages
+                Active conversations
+                Not active conversations
+        :return:
+        """
+        # return those where users arent in participants ids
+        all_participants_ids = Participant.objects.all().distinct().values_list(
+            'user_id', flat=True
+        )
+
+        participant_not_users = CustomUser.objects.exclude(
+            id__in=all_participants_ids
+        )
+
+        return participant_not_users
+
 
 
     @database_sync_to_async
