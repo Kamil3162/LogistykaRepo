@@ -28,8 +28,9 @@ DEBUG = True
 
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1'
+    # 'localhost',
+    # '127.0.0.1'
+    '*'
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -42,6 +43,8 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'redis',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +59,7 @@ INSTALLED_APPS = [
     'Applications.TruckManage',
     'Applications.UserManage',
     'Applications.MailBox',
+    'Applications.Chat',
 ]
 
 MIDDLEWARE = [
@@ -95,15 +99,19 @@ PASSWORD_HASHERS = [
 ]
 
 WSGI_APPLICATION = 'Logistyka.wsgi.application'
-
-
+ASGI_APPLICATION = 'Logistyka.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': "channels.layers.InMemoryChannelLayer"
+        }
+    }
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'logrep',
+        'NAME': 'logistykarepozytorium',
         'USER': 'root',
         'PASSWORD': 'password',
         'HOST': 'localhost',

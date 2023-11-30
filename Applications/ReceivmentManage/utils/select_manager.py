@@ -1,10 +1,14 @@
-from Applications.UserManage.models import CustomUser
 import random
-
+import os
+import googlemaps
+from Applications.UserManage.models import CustomUser
+from django.db.models import Q
+from django.apps import apps
 
 class ManagerSelect:
     def __init__(self):
         self._managers = CustomUser.objects.filter(groups__name='Manager')
+        self._drivers = CustomUser.objects.filter(groups__name='Driver')
         self.manager = None
 
     def chose_random_manager(self):
@@ -19,4 +23,3 @@ class ManagerSelect:
     @property
     def managers(self):
         return self._managers
-

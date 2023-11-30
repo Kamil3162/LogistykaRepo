@@ -47,9 +47,10 @@ class SemiTrailerEquipmentSerializer(serializers.ModelSerializer):
                 roof_stick=validated_data.get('roof_stick'),
                 dimenstion_board=validated_data.get('dimenstion_board')
             )
-        except IntegrityError:
-            raise IntegrityError(f"Truck:{self.validated_data.get('truck').id}"
-                                 f" Already have equipment ")
+            return semitrailer_equip
+        # except IntegrityError:
+        #     raise IntegrityError(f"Semi Trailer:{self.validated_data.get('semi_trailer').id}"
+        #                          f" Already have equipment ")
         except Exception as e:
             raise Exception(str(e))
 

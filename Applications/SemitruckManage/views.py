@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -11,19 +12,28 @@ from rest_framework import status
 from .serializers import SemiTrailerSerializer, SemiTrailerEquipmentSerializer
 from .models import SemiTrailer, SemiTrailerEquipment
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 
+class PaginationClass(PageNumberPagination):
+    page_size = 5
 
 class SemiTruckViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)
     serializer_class = SemiTrailerSerializer
+    pagination_class = PaginationClass
     lookup_url_kwarg = 'pk'
     queryset = SemiTrailer.objects.all()
 
     def list(self, request, *args, **kwargs):
         try:
-
+            print(request.user)
             semi_trailers = self.get_queryset()
+            page = self.paginate_queryset(semi_trailers)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(instance=semi_trailers, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -79,7 +89,7 @@ class SemiTruckViewSet(ModelViewSet):
             serializer.update(semi_trailer, data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(data={'error':str(e)},
+            return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, *args, **kwargs):
@@ -92,8 +102,16 @@ class SemiTruckEquipmentCreate(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            semi_trailer_instance = get_object_or_404(
+                SemiTrailer,
+                pk=request.data['semi_trailer']
+            )
+            print(request.data)
+            request.data['semi_trailer'] = semi_trailer_instance.pk
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
+
+            request.data['semi_trailer'] = semi_trailer_instance
             serializer.create(request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -108,21 +126,21 @@ class SemiTruckEquipmentDetail(RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = 'pk'
 
     def get_object(self):
-        semitailer_id = self.kwargs.get(self.lookup_url_kwarg)
-        return SemiTrailerEquipment.objects.get(semi_trailer_id=semitailer_id)
+        pk = self.kwargs.get('pk')
+        return SemiTrailerEquipment.objects.get(semi_trailer_id=pk)
 
     def retrieve(self, request, *args, **kwargs):
         try:
             semi_equipment = self.get_object()
-            serializer = self.get_serializer(instace=semi_equipment)
+            serializer = self.get_serializer(semi_equipment)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(data={'error': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         try:
-            data = self.request
+            data = self.request.data
             semi_equipment = self.get_object()
             serializer = self.get_serializer(data=data,
                                              instance=semi_equipment,

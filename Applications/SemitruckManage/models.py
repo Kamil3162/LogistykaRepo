@@ -49,6 +49,10 @@ class SemiTrailer(models.Model):
         except KeyError:
             raise KeyError("Invalid key data")
 
+    @classmethod
+    def get_choices(cls):
+        return cls.CHOICES
+
 class SemiTrailerEquipment(models.Model):
     semi_trailer = models.OneToOneField(SemiTrailer,
                                         on_delete=models.CASCADE,
@@ -70,4 +74,4 @@ class SemiTrailerEquipment(models.Model):
     dimenstion_board = models.BooleanField(default=True, blank=False)
 
     def __str__(self):
-        return self.semi_trailer.id
+        return str(self.semi_trailer.id)

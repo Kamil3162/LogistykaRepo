@@ -1,7 +1,6 @@
 import json
 from django.shortcuts import render
 from rest_framework.views import APIView
-
 from rest_framework.generics import (
     ListAPIView,
     CreateAPIView,
@@ -10,13 +9,11 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     RetrieveUpdateAPIView
 )
-
 from rest_framework import (
     permissions,
     status,
     authentication
 )
-
 from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
@@ -24,6 +21,7 @@ from .serializers import (
     UserDetailSerializer,
     UserPermissionSerializer
 )
+from ..ReceivmentManage.models import Receivment
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth import logout, authenticate, login
@@ -123,7 +121,8 @@ class UserAllView(ListAPIView):
             print(self.get_authenticate_header(request))
             return Response(data=serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PkUserDetailView(RetrieveUpdateDestroyAPIView):
@@ -139,6 +138,7 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         try:
+            print('Esa testowanie wyswietlania')
             user_instance = request.user
             print(user_instance.show_permissions())
             print(user_instance.has_perm('is_active'))
@@ -160,7 +160,6 @@ class PkUserDetailView(RetrieveUpdateDestroyAPIView):
             if serializer.is_valid():
                 mod_user = serializer.update(modified_user, data)
                 mod_user.save()
-                # data={'success': 'naura'}
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_409_CONFLICT)
         except Exception as e:
@@ -171,8 +170,10 @@ class UserPermissionView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (JWTAuthentication, )
 
+
     def get(self, request):
         try:
+            print('esa')
             user = request.user
             serializer = UserPermissionSerializer(instance=user)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -199,7 +200,7 @@ class RegisterUserView(CreateAPIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_serializer_class(self):
         ser_class = super().get_serializer_class()
@@ -218,3 +219,29 @@ class RegisterUserView(CreateAPIView):
     #     print("this is default response header")
     #     print(context)
 
+class DeleteAccount(DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (JWTAuthentication, )
+
+    def get_queryset(self):
+        user = self.request.user
+        return Receivment.objects.filter(destination_user=user)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            print(request.data.get('refresh_token'))
+            # user = request.user
+            # finish_status = Receivment.get_statuses().FINISHED
+            # receivments = self.get_queryset()
+            # print(receivments)
+            # delete_status = user.can_be_deleted(finish_status, receivments)
+            # if delete_status:
+            #     CustomUser.objects.delete_user(user.pk)
+            #     return Response({'success': 'sukces'},
+            #                     status=status.HTTP_200_OK)
+            return Response({'error': 'you cant delete your account ,'
+                                      'you have active receivments'},
+                            status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({'error': str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)

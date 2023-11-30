@@ -75,3 +75,11 @@ class CustomUserManager(BaseUserManager):
         user.is_admin = True
 
         return user
+
+    def delete_user(self, user_id):
+        try:
+            user = self.get(pk=user_id)
+            user.delete()
+            return True
+        except self.model.DoesNotExist:
+            return False

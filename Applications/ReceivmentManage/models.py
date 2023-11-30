@@ -1,24 +1,45 @@
 import datetime
 
 from django.db import models
+from .managers.custom_managers import ReceivmentManager
 from ..TruckManage.models import Truck
 from ..UserManage.models import CustomUser
 from ..SemitruckManage.models import SemiTrailer
+from .managers.location_manager import LocationManager
 from django.utils.translation import gettext_lazy as _
 from enum import Enum
+
+class ReceivmentLocations(models.Model):
+
+    city = models.CharField(max_length=30, default='Jarosław')
+    street = models.CharField(max_length=40, blank=True, default='Czarneckiego')
+    apartment_number = models.CharField(max_length=6, blank=True, default='16')
+    geo_address = models.CharField(max_length=30, blank=True)
+    data_created = models.DateTimeField(auto_now_add=True)
+    final_date = models.DateField(null=True, blank=True)
+
+    objects = models.Manager()
+    location_manager = LocationManager()
+
+    def __str__(self):
+        return str(self.id)
+
+    def concatination_address(self):
+        return str(f"{self.city}, {self.street} {self.apartment_number}")
+
 class Receivment(models.Model):
     class StatusChoices(models.TextChoices):
-        ACCIDENT = 'Accident', _('Accident')
-        IN_PROGESS = 'Proggres', _('In progess')
-        FINISHED = 'Finish', _('Finished')
+        ACCIDENT = 'Accident'
+        IN_PROGESS = 'Proggres'
+        FINISHED = 'Finish'
 
         # @classmethod
         # def choices(cls):
         #     return [(item.value, item.value) for item in cls]
 
     class ReceivmentType(models.TextChoices):
-        DRIVER = 'from_driver', _('From Driver to Manager')
-        MANAGER = 'from_manager', _('From manager to Driver')
+        DRIVER = 'from_driver'
+        MANAGER = 'from_manager'
 
         # @classmethod
         # def choices(cls):
@@ -30,7 +51,7 @@ class Receivment(models.Model):
     destination_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
                                          related_name='destination_user', default=1)
     source_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                               related_name='source_user', default=2)
+                                    related_name='source_user', default=2)
     status = models.CharField(
         choices=StatusChoices.choices,
         default=StatusChoices.IN_PROGESS,
@@ -42,9 +63,27 @@ class Receivment(models.Model):
                                        max_length=12)
     truck_complain = models.CharField(max_length=300, blank=True)
     semi_trailer_complain = models.CharField(max_length=300, blank=True)
+    destination = models.ForeignKey(
+        ReceivmentLocations,
+        on_delete=models.CASCADE,
+        blank=True,
+        default=None
+    )
+
+    objects = models.Manager()
+    driver_manager = ReceivmentManager()
 
     def __str__(self):
         return f'RecevimentID:{self.id}'
+
+    @classmethod
+    def get_statuses(cls):
+        return cls.StatusChoices
+
+    @classmethod
+    def get_receivment_types(cls):
+        return cls.ReceivmentType
+
 
 class TruckReportPhoto(models.Model):
     receivment = models.ForeignKey(Receivment, on_delete=models.CASCADE)
@@ -59,3 +98,10 @@ class SemiTrailerReportPhoto(models.Model):
 
     def __str__(self):
         return f"SemiTrailerPhoto:{self.receivment.id}"
+
+class LocationHistory(models.Model):
+    receivment = models.ForeignKey(Receivment, on_delete=models.CASCADE)
+    location = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
+

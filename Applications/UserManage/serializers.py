@@ -8,7 +8,7 @@ from django.db import IntegrityError
 class UserLoginSerializer(serializers.Serializer):
     class Meta:
         model = CustomUser
-        exclude = ['password','' ]
+        exclude = ['password', '']
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,7 +41,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = (
+            'first_name',
+            'last_name',
+            'email',
+            'phone_number',
+            'own_car',
+            'groups',
+            'is_staff',
+            'pk'
+        )
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password')
@@ -86,3 +95,7 @@ class UserPermissionSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CustomChatUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'first_name', 'last_name']
