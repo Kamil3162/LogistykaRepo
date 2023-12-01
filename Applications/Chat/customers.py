@@ -42,13 +42,16 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             self.user_group = f'group-{self.user_id}'
             conversations_pks = [con.pk for con in self.conversations]
 
+            print(conversations_pks)
+
             participants = await self.get_participants(conversations_pks)
-            print(self.conversations)
 
             conversations_serialize = await sync_to_async(
                 lambda: [ConversationSerializer(conversation).data for
                          conversation in self.conversations]
             )()
+
+            print(len(conversations_serialize))
 
             # we connect with each channel to be active and get messages from users
             for conversation in self.conversations:
@@ -75,7 +78,8 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 'conversations': conversations_serialize,
                 'users': users_serializer
             }))
-            await self.change_status_to_online()
+            # await self.change_status_to_online()
+            await self.change_user_status(True)
 
         except Exception as e:
             print(f'Error in connect: {str(e)}')
@@ -86,27 +90,66 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :param code:
         :return:
         """
-        await self.change_status_to_offline()
+        await self.change_user_status(False)
+        # await self.change_status_to_offline()
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
+            import datetime
+
+            print("otrzymano wiadomosc")
+            print(datetime.datetime.now())
             text_data_json = json.loads(text_data)
+            print(text_data_json)
+
             message_type = text_data_json.get('type')
             message = text_data_json.get('message')
             roomid = text_data_json.get('room_id')
             userid = text_data_json.get('user')
 
+            user_to_start_conversation_id = text_data_json.get(
+                'user_to_conversation'
+            )
+
+            flaga = text_data_json.get(
+                'flaga'
+            )
+
             if message_type == 'get_messages':
                 await self.generate_messages(roomid)
             else:
-                await self.send_message(message, roomid)
+                if user_to_start_conversation_id:
+                    conversation = await self.create_conversation_sync()
+                    user_to_start_conversation = await self.get_user(
+                        user_to_start_conversation_id
+                    )
 
-                await self.saveMessage(userid, roomid, message)
+                    participant = await self.create_participant(
+                        user=self.user,
+                        conversation=conversation
+                    )
 
-                await self.send(text_data=json.dumps({
-                    'type': 'new_message',
-                    'message': message
-                }))
+                    new_user_participant = await self.create_participant(
+                        user=user_to_start_conversation,
+                        conversation=conversation
+                    )
+
+                    print("utworzono nowych frajerow")
+                    await self.send_message(message, roomid)
+
+                elif roomid:
+                    print('esa testowanie')
+
+                    await self.send_message(message, roomid)
+
+                    await self.saveMessage(userid, roomid, message)
+
+                    await self.send(text_data=json.dumps({
+                        'type': 'new_message',
+                        'message': message
+                    }))
+                else:
+                    print("testowanie naura")
 
     async def generate_messages(self, conversation_id):
         """
@@ -154,6 +197,8 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             }
         )
 
+
+
     async def change_status_to_offline(self):
         """
             We need to send to entire and each group where we are that we turn off our appliciation
@@ -173,6 +218,40 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 str(conversation.pk),
                 self.channel_name
             )
+
+    async def change_user_status(self, online:bool):
+        """
+            Change user status to active during login and clicking
+            a chat dashboard.
+
+            :param is_active: A boolean indicating if the user is active.
+            :param is_online: A boolean indicating if the user is online.
+            :return: None
+        :return:
+        """
+        async def conversation_join(status:bool):
+            for conversation in self.conversations:
+                await self.channel_layer.group_send(
+                    str(conversation.pk),
+                    {
+                        'type': 'chat_message',
+                        'message': f'{self.user.first_name} is {status}',
+                        'active': status,
+                    }
+                )
+                if status is False:
+                    await self.channel_layer.group_discard(
+                        str(conversation.pk),
+                        self.channel_name
+                    )
+
+        participant = await self.changeParticipantStatus(online)
+
+        if online is False:
+            await conversation_join(False)
+        else:
+            await conversation_join(True)
+
 
     async def change_status_to_online(self):
         """
@@ -214,6 +293,8 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         try:
             sender = CustomUser.objects.get(pk=userid)
             conversation = Conversations.objects.get(pk=roomid)
+            print(conversation)
+
             message = Messages.objects.create(
                 sender=sender,
                 converstation=conversation,
@@ -282,7 +363,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
     def create_participant(self, user, conversation):
         participant = Participant.objects.create(
             user=user,
-            converstation=conversation
+            conversation=conversation
         )
         return participant
 
@@ -298,6 +379,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             conversation__id__in=conversations_pk,
         ).select_related('user').exclude(user_id=self.user.pk).distinct()
 
+
         unique_participants = []
         seen_user_ids = set()
 
@@ -305,6 +387,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
             if participant.user_id not in seen_user_ids:
                 unique_participants.append(participant)
                 seen_user_ids.add(participant.user_id)
+
 
         return unique_participants
 
