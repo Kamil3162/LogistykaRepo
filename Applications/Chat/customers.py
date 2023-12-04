@@ -1,4 +1,5 @@
 import json
+import datetime
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from django.db.models import Q
@@ -46,12 +47,15 @@ class ConversationConsumer(AsyncWebsocketConsumer):
 
             participants = await self.get_participants(conversations_pks)
 
+            print("esa to jest test")
+            print(self.conversations)
+
             conversations_serialize = await sync_to_async(
                 lambda: [ConversationSerializer(conversation).data for
                          conversation in self.conversations]
             )()
 
-            print(len(conversations_serialize))
+            print(conversations_serialize)
 
             # we connect with each channel to be active and get messages from users
             for conversation in self.conversations:
@@ -69,7 +73,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 user in users_not_participants]
             )()
 
-
             # we send data only for us not for all users this is tottally private
             await self.send(text_data=json.dumps({
                 # 'type': 'chat_message',
@@ -78,7 +81,7 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 'conversations': conversations_serialize,
                 'users': users_serializer
             }))
-            # await self.change_status_to_online()
+
             await self.change_user_status(True)
 
         except Exception as e:
@@ -95,13 +98,9 @@ class ConversationConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data:
-            import datetime
+            print("otrzymano wlasnie wiadomosc")
 
-            print("otrzymano wiadomosc")
-            print(datetime.datetime.now())
             text_data_json = json.loads(text_data)
-            print(text_data_json)
-
             message_type = text_data_json.get('type')
             message = text_data_json.get('message')
             roomid = text_data_json.get('room_id')
@@ -111,14 +110,13 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 'user_to_conversation'
             )
 
-            flaga = text_data_json.get(
-                'flaga'
-            )
+            requestID = text_data_json.get('uniqueRequestID')
 
             if message_type == 'get_messages':
                 await self.generate_messages(roomid)
             else:
                 if user_to_start_conversation_id:
+
                     conversation = await self.create_conversation_sync()
                     user_to_start_conversation = await self.get_user(
                         user_to_start_conversation_id
@@ -134,12 +132,15 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                         conversation=conversation
                     )
 
-                    print("utworzono nowych frajerow")
-                    await self.send_message(message, roomid)
+                    await self.send(text_data=json.dumps({
+                        # 'type': 'chat_message',
+                        'message': 'You are now connected!',
+                        'user': self.user_id + 'naura',
+                        'conversation_id': conversation.pk,
+                        'uniqueRequestID': requestID
+                    }))
 
                 elif roomid:
-                    print('esa testowanie')
-
                     await self.send_message(message, roomid)
 
                     await self.saveMessage(userid, roomid, message)
@@ -196,8 +197,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
                 'message': content,
             }
         )
-
-
 
     async def change_status_to_offline(self):
         """
@@ -314,12 +313,6 @@ class ConversationConsumer(AsyncWebsocketConsumer):
     def get_user(self, user_id):
         return CustomUser.objects.get(pk=user_id)
 
-    @database_sync_to_async
-    def changeUserOfline(self, user):
-        participant_user = Participant.objects.get(user=user)
-        participant_user.active = False
-        participant_user.save()
-        return participant_user
 
     @database_sync_to_async
     def block_user(self):
@@ -402,17 +395,26 @@ class ConversationConsumer(AsyncWebsocketConsumer):
         :return:
         """
         # return those where users arent in participants ids
-        all_participants_ids = Participant.objects.all().distinct().values_list(
-            'user_id', flat=True
-        )
+
+        # each user have a different view for participants
+
+        esa_ids = Participant.objects.filter(
+            user_id=self.user.id
+        ).values_list('conversation_id', flat=True)
+
+        current_users = Participant.objects.filter(
+            conversation_id__in=esa_ids,
+        ).values_list('user_id', flat=True)
+
+        # all_participants_ids = Participant.objects.all().distinct().values_list(
+        #     'user_id', flat=True
+        # )
 
         participant_not_users = CustomUser.objects.exclude(
-            id__in=all_participants_ids
+            id__in=current_users
         )
 
         return participant_not_users
-
-
 
     @database_sync_to_async
     def get_participant(self, pk):
