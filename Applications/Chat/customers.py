@@ -18,7 +18,7 @@ from .serializers import (
     ParticipantSerializer,
     MessageSerializer
 )
-
+import os
 
 class ConversationConsumer(AsyncWebsocketConsumer):
 
