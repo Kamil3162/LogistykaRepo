@@ -6,9 +6,13 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: logrep
-      MYSQL_USER: logistyka
+      MYSQL_USER: root
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: logistykaroot
+    networks:
+      app-network:
+        ipv4_address: 172.16.238.10  # Static IP for MySQL
+
   web:
     build:
       context: .
@@ -17,10 +21,19 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DB_HOST='%'
-      - DB_NAME=logrep
-      - DB_USER=logistyka
-      - DB_PASSWORD=password
+      DB_HOST: 172.16.238.10  # Use MySQL's Static IP here
+      DB_NAME: logrep
+      DB_USER: root
+      DB_PASSWORD: logistykaroot
+      GOOGLE_API: 
     depends_on:
       - db
+    networks:
+      app-network:
+        ipv4_address: 172.16.238.12  # Static IP for Django
 
+networks:
+  app-network:
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24
