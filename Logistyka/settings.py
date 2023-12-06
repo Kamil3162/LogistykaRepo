@@ -111,10 +111,10 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'logistykarepozytorium',
+        'NAME': 'logrep',
         'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
+        'PASSWORD': 'logistykaroot',
+        'HOST': 'db',
         'PORT': '3306',
     }
 }
