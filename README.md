@@ -1,10 +1,6 @@
 # LogistykaRepo
 
-Topic of project is  to manage delivery company.
-You have options to create new users, trucks , update locations.
-Project is based on idea which I get from my lessons on the university.
-We had a task to create application to manage a processes according to assign truck and semitrailers for driver and check actual status of delivery.
-In the project i used a Django, Django REST framework also i added Google API to control and check position of our driver .
+The project's topic is managing a delivery company. It offers options to create new users, trucks, and update locations. This project is inspired by an idea I developed from my university lessons. We were tasked with creating an application to manage processes such as assigning trucks and semitrailers to drivers and checking the current status of deliveries. In the project, I utilized Django and the Django REST framework. Additionally, I integrated Google API to monitor and track the positions of our drivers. The entire frontend was developed using React.js
 
 Entire frontend was created using React.js  
 
@@ -18,9 +14,9 @@ Entire frontend was created using React.js
 + HTML
 
 # Chat
-Chat those was created is all based on Chanells from Django. Also using this i change my development server on daphne
-- We can start conversation with brand new users
-- During login and go on url we have list of all users/conversations
+The chat system that was created is entirely based on Django Channels. Additionally, for this purpose, I switched my development server to Daphne.
+
+We can initiate conversations with brand new users. Upon logging in and visiting a specific URL, we are presented with a list of all users and conversations
 
 # How start this
 1. Create virtual environment
